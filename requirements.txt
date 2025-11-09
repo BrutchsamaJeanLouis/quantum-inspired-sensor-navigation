@@ -1,0 +1,25 @@
+# Quantum-Inspired World Model (QIWM) Dependencies
+# Phase 1: Core computational requirements
+
+# Core numerical computing
+numpy>=1.21.0,<2.0.0
+
+# JIT compilation for performance optimization
+numba>=0.56.0
+
+# Visualization
+pygame>=2.5.0
+matplotlib>=3.5.0
+
+# Optional: Advanced scientific computing
+scipy>=1.9.0
+
+# Development dependencies
+pytest>=7.0.0
+pytest-cov>=4.0.0
+black>=23.0.0
+flake8>=6.0.0
+
+# Documentation
+sphinx>=5.0.0
+sphinx-rtd-theme>=1.0.0
