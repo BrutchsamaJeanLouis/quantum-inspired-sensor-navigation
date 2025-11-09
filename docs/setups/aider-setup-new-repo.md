@@ -249,3 +249,40 @@ aider
 /help            # Show all commands
 /exit            # Quit
 ```
+
+## Directory ALignment /traversal
+
+CONVENTIONS.md typically sits at the root of your git repository, alongside `.aider.conf.yml` and other config files. You reference it in your config like:
+
+```yaml
+# .aider.conf.yml at repo root
+read: CONVENTIONS.md
+```
+
+However, you **can** use conventions files in subdirectories if you want different conventions for different parts of your codebase. For example:
+
+```yaml
+# If working in a specific subdirectory
+read: 
+  - CONVENTIONS.md           # Root-level conventions
+  - backend/API_CONVENTIONS.md  # Backend-specific
+```
+
+Or you could manually load subdirectory conventions with:
+```bash
+aider --read docs/frontend-conventions.md
+```
+
+The key difference from Claude Code: Aider **doesn't automatically discover** conventions files in subdirectories. You must explicitly configure which files to load, either in `.aider.conf.yml` or via command-line flags.
+
+**Recommended structure:**
+```
+my-project/
+├── CONVENTIONS.md          # Main conventions (root)
+├── .aider.conf.yml         # Config pointing to CONVENTIONS.md
+├── .aiderignore
+├── backend/
+│   └── api-guidelines.md   # Optional: load explicitly if needed
+└── frontend/
+    └── ui-standards.md     # Optional: load explicitly if needed
+```
