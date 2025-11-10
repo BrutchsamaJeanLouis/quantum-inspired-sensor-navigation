@@ -37,7 +37,7 @@ def run_interactive_demo():
 
     # Run visualization
     visualizer = WorldVisualizer(world, window_size=800, fps=30)
-    visualizer.run()
+    visualizer.run(update_callback=lambda w: w.update_pilot_wave(dt=0.1))
 
     print("\nDemo completed!")
 
@@ -56,6 +56,10 @@ def run_export_mode():
     world.add_obstacle(32, 32, radius=10.0)
     world.add_obstacle(96, 96, radius=10.0)
     world.compute_potential_field()
+
+    # Update pilot wave
+    for _ in range(100):  # Simulate some time steps
+        world.update_pilot_wave(dt=0.1)
 
     filename = "qiwm_potential_field.png"
     export_field_matplotlib(world, filename)

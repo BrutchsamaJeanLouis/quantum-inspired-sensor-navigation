@@ -67,12 +67,12 @@ class WorldVisualizer:
 
     def render_field(self) -> None:
         """Render the potential field as a heatmap."""
-        vmin, vmax = self.world.grid.min(), self.world.grid.max()
+        vmin, vmax = self.world.get_guidance_field().min(), self.world.get_guidance_field().max()
 
         # Render grid cells
         for x in range(self.world.size):
             for y in range(self.world.size):
-                value = self.world.grid[x, y]
+                value = self.world.get_guidance_field()[x, y]
                 color = self.field_to_color(value, vmin, vmax)
 
                 rect = pygame.Rect(
@@ -121,6 +121,8 @@ class WorldVisualizer:
             f"Energy Sources: {state['num_energy_sources']}",
             f"Obstacles: {state['num_obstacles']}",
             f"Potential Range: [{state['potential_range'][0]:.2f}, {state['potential_range'][1]:.2f}]",
+            f"Pilot Wave Range: [{self.world.pilot_wave.min():.2f}, {self.world.pilot_wave.max():.2f}]",
+            f"Coherence Range: [{self.world.coherence.min():.2f}, {self.world.coherence.max():.2f}]",
             f"FPS: {int(self.clock.get_fps())}"
         ]
 

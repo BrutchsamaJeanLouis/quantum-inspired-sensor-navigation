@@ -1,92 +1,4 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-## Project Overview
-
-**Quantum-Inspired World Model (QIWM)** - A 5-phase research project building bio-inspired AI agents that navigate using quantum-inspired world models (Bohmian pilot waves, Penrose collapse, IIT coherence).
-
-**Current Status**: Phase 1 complete (classical baseline). Ready for Phase 2 (quantum-inspired dynamics).
-
-**Key Constraint**: Runs on modest hardware (i3-4100 CPU, 63GB RAM, 16GB VRAM). Target 15-30 FPS with 128×128 grids.
-
-## Essential Commands
-
-### Development
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Run interactive demo (Pygame window)
-python main.py
-
-# Export static visualization
-python main.py --export
-
-# Run specific examples
-python examples/phase1_basic_demo.py
-python examples/phase1_export_demo.py
-```
-
-### Testing
-```bash
-# Run all unit tests
-pytest tests/test_toy_world.py -v
-
-# Run with coverage
-pytest --cov=src tests/
-
-# Validate Phase 1 completion (5 automated suites)
-python tests/validate_phase1.py
-```
-
-### Performance Profiling
-```bash
-# Profile hot loops (for optimization work)
-python -m cProfile -s cumtime main.py --export > profile.txt
-```
-
-## Architecture
-
-### Core Conceptual Stack (5 Phases)
-```
-Phase 5: Entertainification (UI/UX sandbox)
-Phase 4: Bio-Inspired Agents (NanoAgent navigation)
-Phase 3: IIT Coherence (Φ calculation)
-Phase 2: Quantum-Inspired Dynamics (pilot waves, collapse)
-Phase 1: Classical Baseline (ToyWorld) ← CURRENT
-```
-
-### Code Structure
-```
-src/
-  core/         - Physics simulation (ToyWorld, future: QuantumInspiredWorld)
-  visualization/- Pygame + Matplotlib rendering
-  utils/        - Shared utilities (currently minimal)
-
-examples/       - Runnable demos
-tests/          - Unit tests + validation suites
-docs/           - Phase validation criteria
-```
-
-### Key Classes
-
-**`ToyWorld` (src/core/toy_world.py)** - Phase 1 classical physics
-- Grid-based 2D potential field (NumPy array)
-- Energy sources: (x, y, strength) → attractive 1/r potential
-- Obstacles: (x, y, radius) → repulsive potential
-- Methods: `add_energy_source()`, `add_obstacle()`, `compute_potential_field()`, `get_gradient()`
-
-**`WorldVisualizer` (src/visualization/visualizer.py)** - Real-time rendering
-- Pygame-based heatmap display
-- Runs at configurable FPS (default: 30)
-- Interactive controls: ESC to exit
-
-**Phase 2 Extension (not yet implemented)**:
-```python
-class QuantumInspiredWorld(ToyWorld):
-    # Adds: pilot_wave field, coherence tracking, collapse mechanics
-```
+# Project managment & organisation
 
 ## Development Workflow
 
@@ -97,14 +9,6 @@ class QuantumInspiredWorld(ToyWorld):
 3. **Type hints**: All public methods must have type annotations
 4. **Documentation**: Docstrings required (Google style)
 5. **Performance**: Profile before optimizing (target 15+ FPS @ 128×128)
-
-### Phase Transition Checklist
-
-Before moving to next phase:
-1. Run `python tests/validate_phase1.py` (or current phase validator)
-2. Verify performance targets met
-3. Update `PROJECT_STRUCTURE.md` with new modules
-4. Document baseline metrics for comparison
 
 ### Parameter Tuning
 
@@ -167,6 +71,18 @@ When quantum-inspired features are added (Phase 2+):
 - ✅ Use ablation studies to prove each feature's value
 - ✅ Document "future work" instead of implementing everything
 
+## Codebase organization stratergy (independent from code-generation)
+- ✅ Max lines of code per file = 500 (if larger, propose splitting”)
+- ✅ Add Explicit Dependency Declarations
+At top of each file:
+python"""
+Module: api/routes.py
+Depends on: 
+  - auth/session_manager.py (Session.validate)
+  - database/models.py (User, Post)
+DO NOT modify this file without checking dependents in src/frontend/
+"""
+
 ## Validation Approach
 
 ### Quantitative Metrics (Phase 2+ comparison)
@@ -191,15 +107,6 @@ Goal: Falsify this with 10-20% improvements.
 - **Classes**: PascalCase (`ToyWorld`, `NanoAgent`)
 - **Validation**: `validate_phase{N}.py` in tests/
 
-## Project Philosophy
-
-**Scope Discipline**: This is a 10-week research prototype, not production software. Build the minimal viable demonstration of quantum-inspired principles, then stop.
-
-**Validation-First**: Each phase must prove value over previous baseline. No speculative features.
-
-**Honest Framing**: "Inspired by Bohm/Penrose/IIT" ≠ "implements quantum mechanics". This is conceptual bridge-building, not physics simulation.
-
-**Entertainification**: The demo must be visceral and engaging. Research lives through experiences people can't stop thinking about.
 
 ## References
 
@@ -214,4 +121,4 @@ Goal: Falsify this with 10-20% improvements.
 2. Run validation script for current phase
 3. Profile before optimizing
 4. Prefer simplicity over cleverness
-5. Document why, not just what
+5. Document "why", not just "what"
