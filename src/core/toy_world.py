@@ -1,4 +1,8 @@
 """
+Module: src\\core\\toy_world.py
+Depends on:
+  - None (standalone)
+
 Toy Physics Substrate for Quantum-Inspired World Model
 Phase 1: Classical potential field simulation
 

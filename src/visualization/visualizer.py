@@ -1,4 +1,8 @@
 """
+Module: src\visualization\visualizer.py
+Depends on:
+  - src.core.toy_world (ToyWorld)
+
 Visualization module for QIWM using Pygame.
 
 Provides real-time rendering of the potential field and world state.

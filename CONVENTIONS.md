@@ -80,7 +80,7 @@ Module: api/routes.py
 Depends on: 
   - auth/session_manager.py (Session.validate)
   - database/models.py (User, Post)
-DO NOT modify this file without checking dependents in src/frontend/
+DO NOT modify this file without checking dependent breakage/updates
 """
 
 ## Validation Approach

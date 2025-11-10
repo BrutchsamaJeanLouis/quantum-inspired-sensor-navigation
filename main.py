@@ -1,4 +1,9 @@
 """
+Module: main.py
+Depends on:
+  - src.core.toy_world (ToyWorld)
+  - src.visualization.visualizer (WorldVisualizer, export_field_matplotlib)
+
 QIWM - Quantum-Inspired World Model
 Main entry point for running simulations
 
