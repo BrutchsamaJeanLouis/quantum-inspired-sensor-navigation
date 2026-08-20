@@ -34,14 +34,14 @@ and 0% survive; quantum 20/20 cross, 100% survive (p ≤ 2.4e-5)**.
 | maze | 0% | 100% (all q>0) | ≤1.6e-5 |
 | single_source | 20% | 100% | ≤1.6e-5 |
 | default | 45% | 90% @0.3/0.5 | 7.6e-4 |
-| moving | 45% | 67% @0.1 (p≈0.11, n.s. at n=10) | n.s. — weakest scenario |
+| moving | 45% | 68%@0.05 (p<5e-5), → baseline by q≥0.2 | n=50: monotone |
 
 Collapse ablation: static geometries need only the pilot-wave channel
 (collapse-off still wins); in moving/trapped fields, quantum agents
 WITHOUT collapse do *worse* than classical (0-48%) — the collapse/coherence
-decision gate is the survival mechanism. Moving scenario: v2's
-"coupling liability" (97→39%) **retracted** by finer q-sweep
- — seed luck; modest low-q bump, n.s. at n=10. Dead-end escapes: 194/132/77 quantum-only, 0 classical.
+decision gate is the survival mechanism. Moving scenario at n=50: monotone curve 68%@0.05→44%@0.5
+(p<5e-5→n.s.). ε-greedy classical leaks tunnel at any noise
+(ε=0.1→68% alive); quantum crosses noise-free via gradient. Dead-end escapes: 194/132/77 quantum-only, 0 classical.
 
 ### Instrument ASCII
 ```
@@ -58,7 +58,7 @@ guidance = grid + q·3000·(pilot/pmax)      ◀── q=0 ⇒ classical argmax 
 ```
 
 ### Open / next (Priority 6 in TODO.md)
-1. n≥50 run in moving scenario (n is the bottleneck; classical baseline deterministic)
+1. Crossing-latency/directionality metric (gradient crossing vs ε-noise leakage)
 2. ε-greedy classical control baseline
 3. Phi metric into the harness (readme threshold: quantum_phi > 1.5×)
 4. Path-efficiency ratio (threshold 15%)

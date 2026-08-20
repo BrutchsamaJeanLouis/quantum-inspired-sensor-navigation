@@ -108,7 +108,7 @@ Mann-Whitney U, α=0.05):
 | maze | 0% alive | 100% alive at every q>0 (p ≤ 1.6e-5) | **decisive** |
 | single_source | 20% alive | 100% alive (p ≤ 1.6e-5) | **decisive** |
 | default | 45% alive | 90% at q=0.3/0.5 (p ≈ 7.6e-4) | significant |
-| moving | 45% alive | 67% at q=0.05/0.1 (p ≈ 0.11) | **n.s. at n=10** (sweep, see §4) |
+| moving | 45% alive | 68% at q=0.05 (p<5e-5, n=50); decays monotonically to baseline by q≥0.2 | significant, see §4 |
 
 The tunnel is the cleanest result: a gapless 128-cell wall separates the
 swarm from its only energy source. Classical agents: 0 cross, 0 survive —
@@ -141,23 +141,49 @@ has been measured). In static fields the sensor alone wins; against
 moving fields and trap geometries, sensing without the collapse-driven
 decision switch is actively fatal.
 
-### 4. The moving scenario is the honest edge case — and v2 overclaimed
+### 4. The moving scenario: coupling-liability curve, resolved at n=50
 
-v2 (n=10 at 4 q-levels) reported 97%@0.1 → 66%@0.3 → 39%@0.5 — a
-monotone liability. The finer q-sweep (`q_sweep_moving.csv`, 8 levels ×
-10 seeds, collapse ON) **retracts** that reading: the effect is a modest low-q bump, not a liability —
-and v2's q=0.1 draw was seed luck in a bimodal outcome.
+Three runs tell the story: v2 (n=10) showed 97%@0.1 → 39%@0.5 (a slope,
+partly seed luck); the n=10 fine sweep (`q_sweep_moving.csv`) showed
+nothing significant (underpowered); the n=50 sweep
+(`q_sweep_moving_n50.csv`, 8 levels × 50 seeds, collapse ON) **confirms a
+real, monotone effect** — a significant quantum advantage at low q that
+decays to the classical baseline as q grows:
 
 | q | 0.0 | 0.05 | 0.1 | 0.15 | 0.2 | 0.3 | 0.4 | 0.5 |
 |---|---|---|---|---|---|---|---|---|
-| alive | 0.45±0.00 | 0.66±0.43 | 0.67±0.44 | 0.48±0.48 | 0.49±0.49 | 0.49±0.49 | 0.40±0.49 | 0.40±0.49 |
-| p vs q=0 | — | 0.11 | 0.11 | 1.00 | 1.00 | 1.00 | 0.43 | 0.43 |
+| alive (n=50) | 0.450 | 0.679 | 0.653 | 0.621 | 0.569 | 0.528 | 0.451 | 0.435 |
+| p vs q=0 | — | <5e-5 | 8e-4 | 9e-3 | 0.14 | 0.46 | 0.46 | 0.26 |
 
-At n=10 nothing reaches α=0.05. Honest read: moving fields are where
-the quantum advantage is *weakest* (non-stationary field + lagging wave
-channel), and resolving it needs n≥50 — the classical baseline is
-deterministic (0.00 std), so the moving scenario is the one where the
-instrument's sample size, not the effect size, is the bottleneck.
+Mechanistic read: the classical energy field updates instantly when a
+source moves; the pilot wave lags. A *weak* quantum channel adds
+non-local sensing (advantage); a *strong* channel glues the agent to a
+stale wave (liability). The moving scenario has an interior optimum at
+low coupling — the static scenarios saturate at q=0.1, so the operating
+point is: weak coupling for dynamic fields, anything above for statics.
+
+### 4b. Tunnel robustness: ε-greedy classical leaks through the wall
+
+The tunnel's 0% vs 100% contrast is against *deterministic* classical.
+A stochastic classical control (ε-greedy: uniform random step with
+probability ε from the same action set; `classical_epsilon`) leaks the
+1-cell wall at **any** noise level:
+
+| baseline | crossings (per 100 agents) | alive |
+|---|---|---|
+| classical ε=0 | 0 | 0% |
+| ε=0.05 | 51 | 43% |
+| ε=0.10 | 75 | 68% |
+| ε=0.20 | 90 | 83% |
+| ε=0.30 | ~96 | ~92% |
+| quantum q=0.1–0.5 (ε=0) | 99–100 | 90–100% |
+
+The wall therefore discriminates *deterministic vs noisy* decision-making,
+not quantum vs classical per se. The defensible quantum claim: the tunnel
+is crossed **without decision noise** — the pilot-wave term provides a
+positive gradient across the wall, while classical crossing requires
+random jumps over it. A crossing-latency/directionality metric (next
+item) would separate the two crossing modes quantitatively.
 
 ### 5. Dead-end escapes are quantum-only
 
@@ -167,9 +193,7 @@ local minima of the shifting field escape exclusively via Boltzmann mode.
 
 ### 6. Limitations (honest)
 
-- n=10 per config; the moving-scenario effect is not significant at this
-  n (finer q-sweep: p ≥ 0.11 at every q; v2's q=0.1 "p=3.3e-5" was seed
-  luck — see §4). Moving-scenario resolution needs n≥50.
+- The n=10 sweep was underpowered for the moving scenario; resolved at n=50 (§4): significant at q≤0.15, monotone decay to baseline by q≥0.2.
 - The benefit curve's lower bound is untested below q=0.1; 0.1 already
   saturates most scenarios, so the "quantum threshold" is < 0.1.
 - Instrument constants (gain 3000, dt 0.2, dissipation 0.9999, prewarm
@@ -184,10 +208,11 @@ local minima of the shifting field escape exclusively via Boltzmann mode.
 
 ### 7. Next steps
 
-1. Finer q-sweep (0.05, 0.1, 0.2, ...) in the moving scenario to resolve
-   the coupling-liability curve.
-2. ε-greedy classical baseline control.
-3. Paper (8-12 pages) around: instrument forensics → tunnel result →
-   collapse ablation → moving-target tradeoff.
+1. Crossing-latency / directionality metric: separate quantum
+   gradient-driven crossing from ε-noise leakage quantitatively (both are
+   implemented as controls; see §4b).
+2. Paper (8-12 pages) around: instrument forensics → tunnel result
+   (incl. ε-greedy robustness, §4b) → collapse ablation →
+   moving-scenario coupling curve (n=50, §4).
 4. Demo: tunnel scenario with phi overlay (P key) — the visual of agents
    crossing a wall the classical swarm dies against is the centerpiece.

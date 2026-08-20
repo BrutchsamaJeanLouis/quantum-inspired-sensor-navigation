@@ -131,12 +131,23 @@ class NanoAgent:
         """
         Classical gradient descent: move toward steepest ascent.
 
+        With world.classical_epsilon > 0 (epsilon-greedy control baseline),
+        a uniform random step from the same action set is taken with
+        probability epsilon — a stochastic classical baseline for
+        comparison against quantum Boltzmann sampling.
+
         Args:
             patch: Local guidance field patch
 
         Returns:
             (dx, dy) toward highest value
         """
+        eps = float(getattr(self.world, 'classical_epsilon', 0.0))
+        if eps > 0.0 and np.random.uniform() < eps:
+            flat_idx = int(np.random.randint(patch.size))
+            gx, gy = np.unravel_index(flat_idx, patch.shape)
+            return int(gx - self.sense_radius), int(gy - self.sense_radius)
+
         # Find argmax
         max_idx = np.argmax(patch)
         max_x, max_y = np.unravel_index(max_idx, patch.shape)

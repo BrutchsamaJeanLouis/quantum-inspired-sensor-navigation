@@ -191,7 +191,8 @@ headline_numbers:
   maze: "classical 0% alive → quantum 100% alive at every q>0 (p ≤ 1.6e-5)"
   single_source: "classical 20% → quantum 100% (p ≤ 1.6e-5)"
   default: "classical 45% → quantum 90% at q=0.3/0.5 (p ≈ 7.6e-4)"
-  moving: "classical 45% → quantum 67% at q=0.1 (p ≈ 0.11, n.s. at n=10); fine q-sweep retracts the v2 coupling-liability claim — weakest-effect scenario, needs n≥50"
+  moving: "n=50 sweep: 68% at q=0.05 (p<5e-5) → 44% at q=0.5 — real monotone coupling-liability curve, optimum at weak coupling"
+  tunnel_robustness: "ε-greedy classical leaks the 1-cell wall at any noise (ε=0.05 → 43% alive, ε=0.1 → 68%); quantum crosses with zero decision noise via gradient — the tunnel tests deterministic-vs-noisy"
 
 collapse_ablation: "static: pilot wave suffices (collapse off OK); dynamic/trapped: quantum agents WITHOUT collapse do WORSE than classical — collapse gate is the survival mechanism"
 
@@ -205,7 +206,7 @@ thresholds_met:
 
 artifacts:
   data: "ablation_results_v2.csv (400 runs)"
-  analysis: "examples/analyze_results.py → docs/RESULTS.md"
+  analysis: "examples/analyze_results.py → docs/RESULTS.md; examples/q_sweep_moving.py → q_sweep_moving{n,_n50}.csv"
   runner: "examples/run_ablation_study.py --scenario all --runs 10"
 
 ## Parameter Space (Initial Values)

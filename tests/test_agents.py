@@ -257,3 +257,26 @@ class TestZeroCouplingClassicalBehavior:
         # Sampling must include the argmax and produce >1 distinct move
         assert (argmax_dx, argmax_dy) in moves
         assert len(moves) > 1
+
+
+class TestEpsilonGreedyClassicalControl:
+    """Stochastic classical baseline: world.classical_epsilon makes
+    classical decision steps uniform-random with probability epsilon."""
+
+    def test_high_epsilon_moves_stochastically(self):
+        world = QuantumInspiredWorld(
+            size=64, quantum_coupling=0.0, classical_epsilon=0.99)
+        world.add_energy_source(40, 40, strength=100.0)
+        world.compute_potential_field()
+        agent = NanoAgent(10, 10, world)
+        moves = {agent.decide_action() for _ in range(200)}
+        assert len(moves) > 5
+
+    def test_zero_epsilon_is_deterministic(self):
+        world = QuantumInspiredWorld(
+            size=64, quantum_coupling=0.0, classical_epsilon=0.0)
+        world.add_energy_source(40, 40, strength=100.0)
+        world.compute_potential_field()
+        agent = NanoAgent(10, 10, world)
+        moves = {agent.decide_action() for _ in range(200)}
+        assert len(moves) == 1

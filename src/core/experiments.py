@@ -34,6 +34,7 @@ class ExperimentConfig:
         max_steps: int = 500,
         seed: Optional[int] = None,
         barrier_x: Optional[int] = None,
+        classical_epsilon: float = 0.0,
     ):
         self.scenario = scenario
         self.world_size = world_size
@@ -45,6 +46,7 @@ class ExperimentConfig:
         self.max_steps = max_steps
         self.seed = seed
         self.barrier_x = barrier_x
+        self.classical_epsilon = classical_epsilon
 
 
 class ExperimentMetrics:
@@ -89,6 +91,7 @@ def create_scenario_world(
     world_size: int,
     quantum_coupling: float,
     diffusion_rate: float,
+    classical_epsilon: float = 0.0,
 ) -> QuantumInspiredWorld:
     """Create a world configured for a specific scenario."""
     world = QuantumInspiredWorld(
@@ -96,6 +99,7 @@ def create_scenario_world(
         quantum_coupling=quantum_coupling,
         diffusion_rate=diffusion_rate,
         pilot_wave_gain=3000.0,
+        classical_epsilon=classical_epsilon,
     )
 
     if scenario == 'default':
@@ -175,6 +179,7 @@ def run_single_experiment(config: ExperimentConfig) -> ExperimentMetrics:
         config.world_size,
         config.quantum_coupling,
         config.diffusion_rate,
+        config.classical_epsilon,
     )
 
     # Prewarm the pilot wave so the diffusive field is established before

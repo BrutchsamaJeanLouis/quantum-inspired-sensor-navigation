@@ -42,6 +42,7 @@ class QuantumInspiredWorld(ToyWorld):
         collapse_wave_amplify: float = 1.1,
         pilot_wave_gain: float = 3000.0,
         pilot_wave_dissipation: float = 0.9999,
+        classical_epsilon: float = 0.0,
     ):
         """
         Initialize quantum-inspired world.
@@ -58,11 +59,16 @@ class QuantumInspiredWorld(ToyWorld):
             pilot_wave_dissipation: Per-step amplitude retention of the pilot
                 wave (default: 0.9999). Low dissipation lets the diffusive
                 profile propagate non-locally through obstacles.
+            classical_epsilon: Epsilon-greedy probability for classical
+                (zero-coupling or low-coherence) decision steps (default 0.0
+                = deterministic argmax). Used for stochastic classical
+                control baselines.
         """
         super().__init__(size)
         self.pilot_wave = np.zeros((size, size), dtype=np.float32)
         self.coherence = np.ones((size, size), dtype=np.float32)
         self.quantum_coupling = quantum_coupling
+        self.classical_epsilon = classical_epsilon
         self.diffusion_rate = diffusion_rate
         self.pilot_wave_gain = pilot_wave_gain
         self.pilot_wave_dissipation = pilot_wave_dissipation

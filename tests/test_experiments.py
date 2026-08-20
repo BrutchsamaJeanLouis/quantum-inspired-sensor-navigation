@@ -100,3 +100,15 @@ class TestPilotWaveGain:
         for _ in range(50):
             world.update_pilot_wave(dt=0.1)
         assert np.allclose(world.get_guidance_field(), world.grid)
+
+
+class TestClassicalEpsilonConfig:
+    """classical_epsilon must thread from ExperimentConfig to the world."""
+
+    def test_epsilon_passes_to_world(self):
+        config = ExperimentConfig(scenario='default', quantum_coupling=0.0,
+                                 classical_epsilon=0.25)
+        world = create_scenario_world(
+            config.scenario, config.world_size, config.quantum_coupling,
+            config.diffusion_rate, config.classical_epsilon)
+        assert world.classical_epsilon == 0.25
