@@ -38,8 +38,6 @@ class ToyWorld:
         self.grid = np.zeros((size, size), dtype=np.float32)
         self.energy_sources: List[Tuple[int, int, float]] = []
         self.obstacles: List[Tuple[int, int, float]] = []
-        self.pilot_wave = np.zeros((size, size), dtype=np.float32)
-        self.coherence = np.ones((size, size), dtype=np.float32)
 
     def add_energy_source(self, x: int, y: int, strength: float = 1.0) -> None:
         """
@@ -82,71 +80,19 @@ class ToyWorld:
         # Reset grid
         self.grid.fill(0.0)
 
-        # Compute potential for each grid cell
-        for x in range(self.size):
-            for y in range(self.size):
-                potential = 0.0
+        # Create coordinate arrays for vectorized computation
+        xx, yy = np.meshgrid(np.arange(self.size), np.arange(self.size), indexing='ij')
 
-                # Attraction to energy sources (1/r potential)
-                for ex, ey, strength in self.energy_sources:
-                    dist = np.sqrt((x - ex)**2 + (y - ey)**2) + 1e-5
-                    potential += strength / dist
-
-                # Repulsion from obstacles (negative 1/r potential)
-                for ox, oy, radius in self.obstacles:
-                    dist = np.sqrt((x - ox)**2 + (y - oy)**2) + 1e-5
-                    if dist < radius:
-                        potential -= 10.0 / dist
-
-                self.grid[x, y] = potential
-
-    def update_pilot_wave(self, dt: float = 0.1) -> None:
-        """
-        Update the pilot wave field using diffusion.
-
-        Args:
-            dt: Time step for diffusion
-        """
-        # Laplacian (diffusion) - spreads influence
-        laplacian = (
-            np.roll(self.pilot_wave, 1, axis=0) +
-            np.roll(self.pilot_wave, -1, axis=0) +
-            np.roll(self.pilot_wave, 1, axis=1) +
-            np.roll(self.pilot_wave, -1, axis=1) -
-            4 * self.pilot_wave
-        )
-        self.pilot_wave += dt * laplacian
-
-        # Couple to energy sources (pilot wave "guides" toward energy)
+        # Attraction to energy sources (1/r potential) — vectorized
         for ex, ey, strength in self.energy_sources:
-            self.pilot_wave[ex, ey] += strength * dt
+            dist = np.sqrt((xx - ex)**2 + (yy - ey)**2) + 1e-5
+            self.grid += strength / dist
 
-    def collapse_field(self, x: int, y: int, radius: int = 3) -> None:
-        """
-        Collapse the field around a point (Penrose-inspired).
-
-        Args:
-            x: X coordinate of the observation point
-            y: Y coordinate of the observation point
-            radius: Radius of influence for collapse
-        """
-        for dx in range(-radius, radius + 1):
-            for dy in range(-radius, radius + 1):
-                nx, ny = (x + dx) % self.size, (y + dy) % self.size
-                dist = np.sqrt(dx**2 + dy**2)
-                if dist < radius:
-                    # Collapse reduces coherence, sharpens pilot wave
-                    self.coherence[nx, ny] *= 0.9
-                    self.pilot_wave[nx, ny] *= 1.1
-
-    def get_guidance_field(self) -> np.ndarray:
-        """
-        Get the combined classical and quantum guidance field.
-
-        Returns:
-            Combined guidance field as a numpy array
-        """
-        return self.grid + 0.3 * self.pilot_wave  # Tunable coupling
+        # Repulsion from obstacles (negative 1/r potential) — vectorized
+        for ox, oy, radius in self.obstacles:
+            dist = np.sqrt((xx - ox)**2 + (yy - oy)**2) + 1e-5
+            mask = dist < radius
+            self.grid[mask] -= 10.0 / dist[mask]
 
     def get_gradient(self, x: int, y: int) -> Tuple[float, float]:
         """

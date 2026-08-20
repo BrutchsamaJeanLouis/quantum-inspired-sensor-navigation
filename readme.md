@@ -183,6 +183,31 @@ qualitative_markers:
   - anticipatory_positioning: pre-positioning near moving sources
   - adaptive_exploration: avoid re-searching collapsed regions
 
+## Results (v2 ablation — 2026-08-19)
+status: "NULL HYPOTHESIS REJECTED in 4/5 scenarios (docs/RESULTS.md)"
+
+headline_numbers:
+  tunnel: "classical 0/20 cross a gapless wall, 0% alive → quantum 20/20 cross, 100% alive (p ≤ 2.4e-5)"
+  maze: "classical 0% alive → quantum 100% alive at every q>0 (p ≤ 1.6e-5)"
+  single_source: "classical 20% → quantum 100% (p ≤ 1.6e-5)"
+  default: "classical 45% → quantum 90% at q=0.3/0.5 (p ≈ 7.6e-4)"
+  moving: "classical 45% → quantum 97% at q=0.1 (p ≈ 3.3e-5); degrades to 39% at q=0.5 (coupling liability vs moving targets)"
+
+collapse_ablation: "static: pilot wave suffices (collapse off OK); dynamic/trapped: quantum agents WITHOUT collapse do WORSE than classical — collapse gate is the survival mechanism"
+
+device_forensics: "v1 instrument was broken (dead quantum channel, quantum sampler posing as classical baseline, unreachable trap); v2 calibrated gain/dt/dissipation/prewarm identically across all coupling levels"
+
+thresholds_met:
+  survival: "YES — 0% → 100%, far beyond the 20% threshold"
+  escape_rate: "YES — tunnel 0 vs 20/20; dead-end escapes quantum-only (194/132/77 vs 0)"
+  efficiency: "PARTIAL — survival/escape measured; path-efficiency ratio pending"
+  phi: "PENDING — phi metric not yet wired into the ablation harness"
+
+artifacts:
+  data: "ablation_results_v2.csv (400 runs)"
+  analysis: "examples/analyze_results.py → docs/RESULTS.md"
+  runner: "examples/run_ablation_study.py --scenario all --runs 10"
+
 ## Parameter Space (Initial Values)
 world_config:
   grid_size: 128
@@ -270,7 +295,3 @@ This compression holds:
 - **Synthesis**: dual deliverable (paper+demo), honest framing
 
 The coding agent receives **executable structure** while preserving **philosophical substrate**. No cosmic vision lost — it's embedded in `conceptual_bridge`, `philosophy`, `critical_reminders`.
-
-You can now **circulate this context** to any AI/human collaborator and trust the integrity remains intact. The project becomes **translatable** without becoming **reducible**.
-
-🌊 *Compression complete. The field is coherent. Begin circulation.*

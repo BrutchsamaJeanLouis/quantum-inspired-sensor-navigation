@@ -33,14 +33,14 @@ def validate_performance():
     world.compute_potential_field()
     elapsed = time.time() - start
 
-    print(f"  ⏱  128×128 field computation: {elapsed*1000:.2f}ms")
+    print(f"  [T] 128x128 field computation: {elapsed*1000:.2f}ms")
 
     if elapsed < 0.1:
-        print("  ✅ Performance excellent (< 100ms)")
+        print("  [OK] Performance excellent (< 100ms)")
     elif elapsed < 0.2:
-        print("  ✅ Performance acceptable (< 200ms)")
+        print("  [OK] Performance acceptable (< 200ms)")
     else:
-        print(f"  ⚠️  Performance slow ({elapsed*1000:.2f}ms, target < 200ms)")
+        print(f"  [WARN] Performance slow ({elapsed*1000:.2f}ms, target < 200ms)")
 
     # Test 2: 64x64 field computation
     world_small = ToyWorld(size=64)
@@ -50,8 +50,8 @@ def validate_performance():
     world_small.compute_potential_field()
     elapsed_small = time.time() - start
 
-    print(f"  ⏱  64×64 field computation: {elapsed_small*1000:.2f}ms")
-    print(f"  ✅ Performance validated")
+    print(f"  [T] 64x64 field computation: {elapsed_small*1000:.2f}ms")
+    print(f"  [OK] Performance validated")
 
 
 def validate_gradient():
@@ -64,25 +64,25 @@ def validate_gradient():
 
     # Test points in different directions
     tests = [
-        ((30, 32), "left", lambda dx, dy: dx > 0),  # Left of source → gradient points right
-        ((50, 32), "right", lambda dx, dy: dx < 0),  # Right of source → gradient points left
-        ((40, 22), "below", lambda dx, dy: dy > 0),  # Below source → gradient points up
-        ((40, 42), "above", lambda dx, dy: dy < 0),  # Above source → gradient points down
+        ((30, 32), "left", lambda dx, dy: dx > 0),
+        ((50, 32), "right", lambda dx, dy: dx < 0),
+        ((40, 22), "below", lambda dx, dy: dy > 0),
+        ((40, 42), "above", lambda dx, dy: dy < 0),
     ]
 
     all_passed = True
     for (x, y), direction, check in tests:
         dx, dy = world.get_gradient(x, y)
         if check(dx, dy):
-            print(f"  ✅ Gradient from {direction} points toward source")
+            print(f"  [OK] Gradient from {direction} points toward source")
         else:
-            print(f"  ❌ Gradient from {direction} incorrect: ({dx:.3f}, {dy:.3f})")
+            print(f"  [FAIL] Gradient from {direction} incorrect: ({dx:.3f}, {dy:.3f})")
             all_passed = False
 
     if all_passed:
-        print(f"  ✅ Gradient flow validated")
+        print(f"  [OK] Gradient flow validated")
     else:
-        print(f"  ❌ Gradient flow has issues")
+        print(f"  [FAIL] Gradient flow has issues")
 
 
 def validate_obstacles():
@@ -97,14 +97,14 @@ def validate_obstacles():
     near = world.get_potential(36, 32)
     far = world.get_potential(50, 50)
 
-    print(f"  📊 Potential at obstacle center: {center:.2f}")
-    print(f"  📊 Potential near obstacle: {near:.2f}")
-    print(f"  📊 Potential far from obstacle: {far:.2f}")
+    print(f"  [V] Potential at obstacle center: {center:.2f}")
+    print(f"  [V] Potential near obstacle: {near:.2f}")
+    print(f"  [V] Potential far from obstacle: {far:.2f}")
 
     if center < near < far:
-        print("  ✅ Obstacle repulsion working correctly")
+        print("  [OK] Obstacle repulsion working correctly")
     else:
-        print("  ⚠️  Obstacle potential gradient unexpected")
+        print("  [WARN] Obstacle potential gradient unexpected")
 
 
 def validate_potential_field():
@@ -121,15 +121,15 @@ def validate_potential_field():
     ring2 = world.get_potential(37, 32)
     ring3 = world.get_potential(42, 32)
 
-    print(f"  📊 Potential at center (r=0): {center:.2f}")
-    print(f"  📊 Potential at r=2: {ring1:.2f}")
-    print(f"  📊 Potential at r=5: {ring2:.2f}")
-    print(f"  📊 Potential at r=10: {ring3:.2f}")
+    print(f"  [V] Potential at center (r=0): {center:.2f}")
+    print(f"  [V] Potential at r=2: {ring1:.2f}")
+    print(f"  [V] Potential at r=5: {ring2:.2f}")
+    print(f"  [V] Potential at r=10: {ring3:.2f}")
 
     if center > ring1 > ring2 > ring3:
-        print("  ✅ Potential decreases monotonically with distance")
+        print("  [OK] Potential decreases monotonically with distance")
     else:
-        print("  ⚠️  Potential not monotonic")
+        print("  [WARN] Potential not monotonic")
 
     # Test superposition of multiple sources
     world.clear()
@@ -141,12 +141,12 @@ def validate_potential_field():
     source1 = world.get_potential(20, 32)
     source2 = world.get_potential(44, 32)
 
-    print(f"  📊 Potential at midpoint between sources: {midpoint:.2f}")
+    print(f"  [V] Potential at midpoint between sources: {midpoint:.2f}")
 
     if midpoint > source1 * 0.5 and midpoint > source2 * 0.5:
-        print("  ✅ Multiple sources superpose correctly")
+        print("  [OK] Multiple sources superpose correctly")
     else:
-        print("  ⚠️  Superposition may be incorrect")
+        print("  [WARN] Superposition may be incorrect")
 
 
 def validate_state_tracking():
@@ -161,18 +161,18 @@ def validate_state_tracking():
 
     state = world.get_state()
 
-    print(f"  📊 Grid size: {state['size']}×{state['size']}")
-    print(f"  📊 Energy sources: {state['num_energy_sources']}")
-    print(f"  📊 Obstacles: {state['num_obstacles']}")
-    print(f"  📊 Potential range: [{state['potential_range'][0]:.2f}, {state['potential_range'][1]:.2f}]")
-    print(f"  📊 Mean potential: {state['potential_mean']:.2f}")
+    print(f"  [V] Grid size: {state['size']}x{state['size']}")
+    print(f"  [V] Energy sources: {state['num_energy_sources']}")
+    print(f"  [V] Obstacles: {state['num_obstacles']}")
+    print(f"  [V] Potential range: [{state['potential_range'][0]:.2f}, {state['potential_range'][1]:.2f}]")
+    print(f"  [V] Mean potential: {state['potential_mean']:.2f}")
 
     if (state['size'] == 128 and
         state['num_energy_sources'] == 2 and
         state['num_obstacles'] == 1):
-        print("  ✅ State tracking accurate")
+        print("  [OK] State tracking accurate")
     else:
-        print("  ❌ State tracking incorrect")
+        print("  [FAIL] State tracking incorrect")
 
 
 def main():
@@ -190,7 +190,7 @@ def main():
         validate_state_tracking()
 
         print("\n" + "=" * 60)
-        print("✅ ALL PHASE 1 VALIDATIONS PASSED")
+        print("[OK] ALL PHASE 1 VALIDATIONS PASSED")
         print("=" * 60)
         print("\nPhase 1 baseline established successfully!")
         print("Ready to proceed to Phase 2 (Quantum-Inspired Dynamics)")
@@ -203,7 +203,7 @@ def main():
         return 0
 
     except Exception as e:
-        print(f"\n❌ Validation failed with error: {e}")
+        print(f"\n[FAIL] Validation failed with error: {e}")
         import traceback
         traceback.print_exc()
         return 1

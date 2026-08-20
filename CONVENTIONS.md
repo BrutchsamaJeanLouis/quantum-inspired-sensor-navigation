@@ -2,7 +2,7 @@
 
 ## Development Workflow
 
-### When Adding New Features
+### When Adding New Features (check this after accepting the applied edits from LLM)
 
 1. **Scope discipline**: Check readme.md phase plan - does this belong in current phase?
 2. **Test-driven**: Add unit test to `tests/test_toy_world.py` first
@@ -71,9 +71,9 @@ When quantum-inspired features are added (Phase 2+):
 - ✅ Use ablation studies to prove each feature's value
 - ✅ Document "future work" instead of implementing everything
 
-## Codebase organization stratergy (independent from code-generation)
-- ✅ Max lines of code per file = 500 (if larger, propose splitting”)
-- ✅ Add Explicit Dependency Declarations
+## Codebase organization stratergy (check this after accepting the applied edits from LLM)
+- ✅ Max lines of code per file = 450 (if larger, propose splitting”)
+- ✅ ALWAYS Add Explicit Dependency Declarations
 At top of each file:
 python"""
 Module: api/routes.py
@@ -82,6 +82,8 @@ Depends on:
   - database/models.py (User, Post)
 DO NOT modify this file without checking dependent breakage/updates
 """
+- ✅ Update requirements.txt with new libraries
+- ✅ Update PROJECT_STRUCTURE.md with new files
 
 ## Validation Approach
 

@@ -141,7 +141,3 @@ class TestToyWorld:
         corner = world.get_potential(0, 0)
 
         assert midpoint > corner
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
