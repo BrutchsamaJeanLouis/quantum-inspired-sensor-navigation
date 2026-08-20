@@ -192,7 +192,7 @@ headline_numbers:
   single_source: "classical 20% → quantum 100% (p ≤ 1.6e-5)"
   default: "classical 45% → quantum 90% at q=0.3/0.5 (p ≈ 7.6e-4)"
   moving: "n=50 sweep: 68% at q=0.05 (p<5e-5) → 44% at q=0.5 — real monotone coupling-liability curve, optimum at weak coupling"
-  tunnel_robustness: "ε-greedy classical leaks the 1-cell wall at any noise (ε=0.05 → 43% alive, ε=0.1 → 68%); quantum crosses with zero decision noise via gradient — the tunnel tests deterministic-vs-noisy"
+  crossing_taxonomy: "ALL quantum tunnel crossings are seam wraps (torus shortcut, ~2.5-step latency); 0 wall jumps; ε-noise (ε=0.1 → 68% alive) leaks via wall jumps — the tunnel separates determinism-vs-exploration, not quantum-vs-classical per se"
 
 collapse_ablation: "static: pilot wave suffices (collapse off OK); dynamic/trapped: quantum agents WITHOUT collapse do WORSE than classical — collapse gate is the survival mechanism"
 

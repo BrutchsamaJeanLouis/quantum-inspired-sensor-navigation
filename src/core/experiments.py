@@ -60,6 +60,11 @@ class ExperimentMetrics:
         self.agent_paths_to_energy: List[float] = []
         self.deadend_escapes: int = 0
         self.barrier_crossings: int = 0
+        self.first_crossing_latencies: List[float] = []
+        self.crossings_toward: int = 0
+        self.crossings_total: int = 0
+        self.wall_crossings: int = 0
+        self.seam_crossings: int = 0
         self.world_coherence_history: List[float] = []
         self.pilot_wave_history: List[float] = []
 
@@ -81,6 +86,14 @@ class ExperimentMetrics:
             'avg_steps_taken': np.mean(self.agent_steps) if self.agent_steps else 0,
             'deadend_escapes': self.deadend_escapes,
             'barrier_crossings': self.barrier_crossings,
+            'first_crossing_latency_mean': (float(np.mean(self.first_crossing_latencies))
+                                             if self.first_crossing_latencies else float('nan')),
+            'first_crossing_latency_median': (float(np.median(self.first_crossing_latencies))
+                                               if self.first_crossing_latencies else float('nan')),
+            'crossing_toward_frac': (self.crossings_toward / self.crossings_total
+                                     if self.crossings_total else float('nan')),
+            'wall_crossings': self.wall_crossings,
+            'seam_crossings': self.seam_crossings,
             'final_coherence_mean': self.world_coherence_history[-1] if self.world_coherence_history else 0,
             'final_pilot_wave_mean': self.pilot_wave_history[-1] if self.pilot_wave_history else 0,
         }
@@ -225,6 +238,7 @@ def run_single_experiment(config: ExperimentConfig) -> ExperimentMetrics:
                 new_y = (agent.y + dy) % world.size
                 agent.x = new_x
                 agent.y = new_y
+                agent.x_traj.append(agent.x)
                 agent.steps_taken += 1
                 agent.trail.append((agent.x, agent.y))
                 if len(agent.trail) > agent.max_trail_length:
@@ -270,6 +284,52 @@ def run_single_experiment(config: ExperimentConfig) -> ExperimentMetrics:
         metrics.barrier_crossings = sum(
             1 for agent in swarm.agents if agent.x > config.barrier_x
         )
+
+        # First-crossing taxonomy per agent. The x=64 wall on a 128-torus
+        # does NOT separate the surface: the x=0/127 seam is a passage
+        # around it. Distinguish (a) genuine wall jumps (63<->65, i.e.
+        # pilot-wave/noise tunneling through the spike) from (b) seam
+        # wraps (x<=1 <-> x>=size-2, going around the loop). Latency is
+        # measured from first arrival at the wall-adjacent cell (wall
+        # crossings) or first arrival at the seam (seam wraps).
+        bx = config.barrier_x
+        size = world.size
+        src_xs = [ex for ex, _ey, _s in world.energy_sources]
+        src_side = 1.0 if (src_xs and np.mean(src_xs) > bx) else -1.0
+        adj = bx - 1 if src_side > 0 else bx + 1
+        for agent in swarm.agents:
+            traj = agent.x_traj
+            if len(traj) < 2:
+                continue
+            cross_i, kind = None, None
+            for i in range(1, len(traj)):
+                p, c = traj[i - 1], traj[i]
+                if {p, c} == {bx - 1, bx + 1}:
+                    cross_i, kind = i, 'wall'
+                    break
+                if (p <= 1 and c >= size - 2) or (p >= size - 2 and c <= 1):
+                    cross_i, kind = i, 'seam'
+                    break
+            if cross_i is None:
+                continue
+            metrics.crossings_total += 1
+            if kind == 'wall':
+                metrics.wall_crossings += 1
+            else:
+                metrics.seam_crossings += 1
+            cdir = 1.0 if traj[cross_i] > traj[cross_i - 1] else -1.0
+            if kind == 'seam':
+                cdir = 1.0 if traj[cross_i] >= size - 2 else -1.0
+            if cdir == src_side:
+                metrics.crossings_toward += 1
+            if kind == 'wall':
+                arrive_i = next((i for i, v in enumerate(traj) if v == adj), None)
+            else:
+                arrive_i = next(
+                    (i for i, v in enumerate(traj)
+                     if v <= 1 or v >= size - 2), None)
+            if arrive_i is not None and arrive_i < cross_i:
+                metrics.first_crossing_latencies.append(cross_i - arrive_i)
 
     return metrics
 

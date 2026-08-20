@@ -280,3 +280,15 @@ class TestEpsilonGreedyClassicalControl:
         agent = NanoAgent(10, 10, world)
         moves = {agent.decide_action() for _ in range(200)}
         assert len(moves) == 1
+
+
+class TestXTrajectory:
+    def test_traj_records_every_step(self):
+        world = ToyWorld(32)
+        world.add_energy_source(20, 20, strength=50.0)
+        world.compute_potential_field()
+        agent = NanoAgent(5, 5, world)
+        for _ in range(10):
+            agent.step()
+        assert len(agent.x_traj) == 11
+        assert agent.x_traj[-1] == agent.x

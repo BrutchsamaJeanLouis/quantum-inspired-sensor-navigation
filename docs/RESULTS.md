@@ -110,11 +110,15 @@ Mann-Whitney U, α=0.05):
 | default | 45% alive | 90% at q=0.3/0.5 (p ≈ 7.6e-4) | significant |
 | moving | 45% alive | 68% at q=0.05 (p<5e-5, n=50); decays monotonically to baseline by q≥0.2 | significant, see §4 |
 
-The tunnel is the cleanest result: a gapless 128-cell wall separates the
+The tunnel is the cleanest geometry: a gapless wall column separates the
 swarm from its only energy source. Classical agents: 0 cross, 0 survive —
-the wall cell's −1e6 potential and the −22 adjacent repulsion make crossing
-a gradient-descent impossibility. Any q>0: the pilot wave, which diffuses
-straight through the wall, pulls agents onto the far side; 100% survive.
+the wall spike (−1e6) and its poisoned neighbours make forward progress a
+local-greedy trap, and the classical gradient always points at the wall,
+never at the torus seam (x=0/127) which is the way around it. Any q>0:
+100% survive; the crossing taxonomy (§4b) shows all crossings are seam
+wraps (~2.5-step latency), none through the wall — the globally leaked
+pilot wave makes the far side attractive and Boltzmann sampling finds the
+route.
 
 ### 2. The advantage is quantum-channel-specific, not sampling noise
 
@@ -162,28 +166,36 @@ stale wave (liability). The moving scenario has an interior optimum at
 low coupling — the static scenarios saturate at q=0.1, so the operating
 point is: weak coupling for dynamic fields, anything above for statics.
 
-### 4b. Tunnel robustness: ε-greedy classical leaks through the wall
+### 4b. Crossing taxonomy: the quantum tunnel is a seam shortcut, not a wall jump
 
-The tunnel's 0% vs 100% contrast is against *deterministic* classical.
-A stochastic classical control (ε-greedy: uniform random step with
-probability ε from the same action set; `classical_epsilon`) leaks the
-1-cell wall at **any** noise level:
+The x=64 column on the torus is a contractible loop; it does NOT
+separate the surface — the x=0/127 seam is a way around it. First-
+crossing taxonomy per agent (tunnel, 10 seeds each, collapse ON):
 
-| baseline | crossings (per 100 agents) | alive |
-|---|---|---|
-| classical ε=0 | 0 | 0% |
-| ε=0.05 | 51 | 43% |
-| ε=0.10 | 75 | 68% |
-| ε=0.20 | 90 | 83% |
-| ε=0.30 | ~96 | ~92% |
-| quantum q=0.1–0.5 (ε=0) | 99–100 | 90–100% |
+| baseline | wall jumps (63↔65) | seam wraps | first-crossing latency (steps) |
+|---|---|---|---|
+| classical (ε=0) | 0 | 0 | — |
+| ε-greedy 0.1 | 4 | 20 | 17.4 |
+| ε-greedy 0.3 | 17 | 24 | 5.2 |
+| quantum q=0.1 (ε=0) | 0 | 169 | 2.8 |
+| quantum q=0.5 (ε=0) | 0 | 200 | 2.4 |
 
-The wall therefore discriminates *deterministic vs noisy* decision-making,
-not quantum vs classical per se. The defensible quantum claim: the tunnel
-is crossed **without decision noise** — the pilot-wave term provides a
-positive gradient across the wall, while classical crossing requires
-random jumps over it. A crossing-latency/directionality metric (next
-item) would separate the two crossing modes quantitatively.
+**Retraction:** the v2 tunneling claim — "quantum crosses the wall while
+classical cannot" — was wrong: quantum agents never cross the wall (0 wall
+jumps across all 100 quantum agents); they wrap the seam ~2.5 steps after
+reaching it. The globally leaked pilot wave makes the far side attractive,
+and Boltzmann sampling discovers the route that a local greedy policy can
+structurally never find (its gradient always points at the wall, never at
+the seam). Genuine wall jumps are the ε-noise signature — a pinned agent
+hops over occasionally.
+
+Defensible claim: (1) deterministic local-greedy classical never reaches
+the far side (structural); (2) stochastic classical (ε-greedy) DOES find
+the route, so the tunnel separates *determinism vs exploration*, not
+quantum vs classical per se; (3) the quantum channel shortens first-
+crossing latency (2.4–2.8 vs 5.2–17.4) and survives ~completely (90–100%).
+The 0%→100% survival contrast stands, but the mechanism is *route
+discovery via a globally leaked sensor*, not wall penetration.
 
 ### 5. Dead-end escapes are quantum-only
 
@@ -208,9 +220,8 @@ local minima of the shifting field escape exclusively via Boltzmann mode.
 
 ### 7. Next steps
 
-1. Crossing-latency / directionality metric: separate quantum
-   gradient-driven crossing from ε-noise leakage quantitatively (both are
-   implemented as controls; see §4b).
+1. Maze/dead-end route audit: does the maze advantage also reduce to
+   seam/global route discovery (extend the crossing taxonomy to maze)?
 2. Paper (8-12 pages) around: instrument forensics → tunnel result
    (incl. ε-greedy robustness, §4b) → collapse ablation →
    moving-scenario coupling curve (n=50, §4).

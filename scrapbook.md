@@ -40,8 +40,9 @@ Collapse ablation: static geometries need only the pilot-wave channel
 (collapse-off still wins); in moving/trapped fields, quantum agents
 WITHOUT collapse do *worse* than classical (0-48%) — the collapse/coherence
 decision gate is the survival mechanism. Moving scenario at n=50: monotone curve 68%@0.05→44%@0.5
-(p<5e-5→n.s.). ε-greedy classical leaks tunnel at any noise
-(ε=0.1→68% alive); quantum crosses noise-free via gradient. Dead-end escapes: 194/132/77 quantum-only, 0 classical.
+(p<5e-5→n.s.). Tunnel taxonomy: quantum crossings = 100% seam
+wraps (torus shortcut), 0 wall jumps; ε-noise leaks the wall;
+classical gradient always points at the wall. Dead-end escapes: 194/132/77 quantum-only, 0 classical.
 
 ### Instrument ASCII
 ```
@@ -58,16 +59,13 @@ guidance = grid + q·3000·(pilot/pmax)      ◀── q=0 ⇒ classical argmax 
 ```
 
 ### Open / next (Priority 6 in TODO.md)
-1. Crossing-latency/directionality metric (gradient crossing vs ε-noise leakage)
-2. ε-greedy classical control baseline
-3. Phi metric into the harness (readme threshold: quantum_phi > 1.5×)
-4. Path-efficiency ratio (threshold 15%)
-5. Paper: forensics → tunnel → collapse ablation → tradeoff
-6. Demo video: tunnel + phi overlay centerpiece
+1. Maze route audit (does that advantage also reduce to global route discovery?)
+2. Phi metric into the harness (readme threshold: quantum_phi > 1.5×)
+3. Path-efficiency ratio (threshold 15%)
+4. Paper: forensics → tunnel taxonomy → collapse → coupling curve
+5. Demo video: tunnel seam shortcut + phi overlay
 
 ### Caveats to carry into the paper
 - n=10/config; moving-scenario variance is high (bimodal seeds)
 - Benefit lower bound untested below q=0.1
-- Absolute advantage magnitude is instrument-dependent; the 0%→100%
-  contrast is not — the classical barrier is structural (−1e6 spike),
-  not tuned
+- Absolute advantage magnitude is instrument-dependent; the 0%→100% contrast is not (structural −1e6 spike)

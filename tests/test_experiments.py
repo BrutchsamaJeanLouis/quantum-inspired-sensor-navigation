@@ -112,3 +112,44 @@ class TestClassicalEpsilonConfig:
             config.scenario, config.world_size, config.quantum_coupling,
             config.diffusion_rate, config.classical_epsilon)
         assert world.classical_epsilon == 0.25
+
+
+class TestCrossingLatencyMetrics:
+    """First-crossing latency and directionality metrics (tunnel)."""
+
+    def test_tunnel_crossings_tracked(self):
+        config = ExperimentConfig(scenario='tunnel', quantum_coupling=0.5,
+                                 collapse_enabled=True, seed=0, barrier_x=64,
+                                 max_steps=500)
+        m = run_single_experiment(config)
+        d = m.to_dict()
+        assert d['barrier_crossings'] > 0
+        assert d['first_crossing_latency_mean'] > 0
+        assert d['crossing_toward_frac'] == 1.0
+
+    def test_classical_tunnel_no_crossings(self):
+        config = ExperimentConfig(scenario='tunnel', quantum_coupling=0.0,
+                                 seed=0, barrier_x=64, max_steps=500)
+        d = run_single_experiment(config).to_dict()
+        assert d['barrier_crossings'] == 0
+        import math
+        assert math.isnan(d['first_crossing_latency_mean'])
+
+
+class TestCrossingTaxonomy:
+    """The quantum tunnel crossing is a seam wrap, not a wall jump."""
+
+    def test_quantum_tunnel_crosses_via_seam(self):
+        config = ExperimentConfig(scenario='tunnel', quantum_coupling=0.5,
+                                 collapse_enabled=True, seed=0, barrier_x=64,
+                                 max_steps=500)
+        d = run_single_experiment(config).to_dict()
+        assert d['seam_crossings'] > 0
+        assert d['first_crossing_latency_median'] <= 10
+
+    def test_classical_tunnel_neither_route(self):
+        config = ExperimentConfig(scenario='tunnel', quantum_coupling=0.0,
+                                 seed=0, barrier_x=64, max_steps=500)
+        d = run_single_experiment(config).to_dict()
+        assert d['wall_crossings'] == 0
+        assert d['seam_crossings'] == 0

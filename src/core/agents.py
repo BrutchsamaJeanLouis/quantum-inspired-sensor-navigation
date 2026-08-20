@@ -72,6 +72,7 @@ class NanoAgent:
         self.max_trail_length = max_trail_length
         self.alive = True
         self.trail: List[Tuple[int, int]] = [(self.x, self.y)]
+        self.x_traj: List[int] = [self.x]
         self.steps_taken = 0
         self.energy_source_cooldown: List[int] = [0] * len(world.energy_sources)
         self.in_dead_end = False
@@ -219,6 +220,7 @@ class NanoAgent:
         # Update position
         self.x = new_x
         self.y = new_y
+        self.x_traj.append(self.x)
         self.steps_taken += 1
 
         # Update trail
