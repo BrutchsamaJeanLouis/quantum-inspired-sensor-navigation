@@ -108,7 +108,7 @@ Mann-Whitney U, α=0.05):
 | maze | 0% alive | 100% alive at every q>0 (p ≤ 1.6e-5) | **decisive** |
 | single_source | 20% alive | 100% alive (p ≤ 1.6e-5) | **decisive** |
 | default | 45% alive | 90% at q=0.3/0.5 (p ≈ 7.6e-4) | significant |
-| moving | 45% alive | 97% at q=0.1 (p ≈ 3.3e-5) | significant, q-dependent |
+| moving | 45% alive | 67% at q=0.05/0.1 (p ≈ 0.11) | **n.s. at n=10** (sweep, see §4) |
 
 The tunnel is the cleanest result: a gapless 128-cell wall separates the
 swarm from its only energy source. Classical agents: 0 cross, 0 survive —
@@ -141,15 +141,23 @@ has been measured). In static fields the sensor alone wins; against
 moving fields and trap geometries, sensing without the collapse-driven
 decision switch is actively fatal.
 
-### 4. Strong coupling is a liability against moving targets
+### 4. The moving scenario is the honest edge case — and v2 overclaimed
 
-In the moving scenario the alive rate with collapse ON degrades as
-q rises: 97% (q=0.1) → 66% (q=0.3) → 39% (q=0.5), with high seed variance.
-Mechanistic reading: the classical energy field updates instantly when a
-source moves; the pilot wave lags, so a strongly coupled agent tracks a
-fading ghost. Intermediate coupling appears optimal for dynamic navigation
-— a testable, falsifiable prediction (q-sweep at finer resolution in the
-moving scenario).
+v2 (n=10 at 4 q-levels) reported 97%@0.1 → 66%@0.3 → 39%@0.5 — a
+monotone liability. The finer q-sweep (`q_sweep_moving.csv`, 8 levels ×
+10 seeds, collapse ON) **retracts** that reading: the effect is a modest low-q bump, not a liability —
+and v2's q=0.1 draw was seed luck in a bimodal outcome.
+
+| q | 0.0 | 0.05 | 0.1 | 0.15 | 0.2 | 0.3 | 0.4 | 0.5 |
+|---|---|---|---|---|---|---|---|---|
+| alive | 0.45±0.00 | 0.66±0.43 | 0.67±0.44 | 0.48±0.48 | 0.49±0.49 | 0.49±0.49 | 0.40±0.49 | 0.40±0.49 |
+| p vs q=0 | — | 0.11 | 0.11 | 1.00 | 1.00 | 1.00 | 0.43 | 0.43 |
+
+At n=10 nothing reaches α=0.05. Honest read: moving fields are where
+the quantum advantage is *weakest* (non-stationary field + lagging wave
+channel), and resolving it needs n≥50 — the classical baseline is
+deterministic (0.00 std), so the moving scenario is the one where the
+instrument's sample size, not the effect size, is the bottleneck.
 
 ### 5. Dead-end escapes are quantum-only
 
@@ -159,8 +167,9 @@ local minima of the shifting field escape exclusively via Boltzmann mode.
 
 ### 6. Limitations (honest)
 
-- n=10 per config; the moving-scenario q-dependence is suggestive but not
-  yet monotone-resolved (p: 3.3e-5 / 0.11 / 0.44).
+- n=10 per config; the moving-scenario effect is not significant at this
+  n (finer q-sweep: p ≥ 0.11 at every q; v2's q=0.1 "p=3.3e-5" was seed
+  luck — see §4). Moving-scenario resolution needs n≥50.
 - The benefit curve's lower bound is untested below q=0.1; 0.1 already
   saturates most scenarios, so the "quantum threshold" is < 0.1.
 - Instrument constants (gain 3000, dt 0.2, dissipation 0.9999, prewarm

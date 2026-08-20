@@ -191,7 +191,7 @@ headline_numbers:
   maze: "classical 0% alive → quantum 100% alive at every q>0 (p ≤ 1.6e-5)"
   single_source: "classical 20% → quantum 100% (p ≤ 1.6e-5)"
   default: "classical 45% → quantum 90% at q=0.3/0.5 (p ≈ 7.6e-4)"
-  moving: "classical 45% → quantum 97% at q=0.1 (p ≈ 3.3e-5); degrades to 39% at q=0.5 (coupling liability vs moving targets)"
+  moving: "classical 45% → quantum 67% at q=0.1 (p ≈ 0.11, n.s. at n=10); fine q-sweep retracts the v2 coupling-liability claim — weakest-effect scenario, needs n≥50"
 
 collapse_ablation: "static: pilot wave suffices (collapse off OK); dynamic/trapped: quantum agents WITHOUT collapse do WORSE than classical — collapse gate is the survival mechanism"
 

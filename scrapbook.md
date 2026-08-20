@@ -34,15 +34,14 @@ and 0% survive; quantum 20/20 cross, 100% survive (p ≤ 2.4e-5)**.
 | maze | 0% | 100% (all q>0) | ≤1.6e-5 |
 | single_source | 20% | 100% | ≤1.6e-5 |
 | default | 45% | 90% @0.3/0.5 | 7.6e-4 |
-| moving | 45% | 97% @0.1 → 39% @0.5 | 3.3e-5 / n.s. |
+| moving | 45% | 67% @0.1 (p≈0.11, n.s. at n=10) | n.s. — weakest scenario |
 
 Collapse ablation: static geometries need only the pilot-wave channel
 (collapse-off still wins); in moving/trapped fields, quantum agents
 WITHOUT collapse do *worse* than classical (0-48%) — the collapse/coherence
-decision gate is the survival mechanism. Moving scenario shows a
-**coupling liability**: 97%@0.1 → 66%@0.3 → 39%@0.5 (wave lags moving
-source; strong tracking = chasing ghosts). Dead-end escapes: 194/132/77
-quantum-only, 0 classical.
+decision gate is the survival mechanism. Moving scenario: v2's
+"coupling liability" (97→39%) **retracted** by finer q-sweep
+ — seed luck; modest low-q bump, n.s. at n=10. Dead-end escapes: 194/132/77 quantum-only, 0 classical.
 
 ### Instrument ASCII
 ```
@@ -59,7 +58,7 @@ guidance = grid + q·3000·(pilot/pmax)      ◀── q=0 ⇒ classical argmax 
 ```
 
 ### Open / next (Priority 6 in TODO.md)
-1. Finer q-sweep (moving) to resolve the liability curve
+1. n≥50 run in moving scenario (n is the bottleneck; classical baseline deterministic)
 2. ε-greedy classical control baseline
 3. Phi metric into the harness (readme threshold: quantum_phi > 1.5×)
 4. Path-efficiency ratio (threshold 15%)
@@ -68,7 +67,7 @@ guidance = grid + q·3000·(pilot/pmax)      ◀── q=0 ⇒ classical argmax 
 
 ### Caveats to carry into the paper
 - n=10/config; moving-scenario variance is high (bimodal seeds)
-- Benefit curve lower bound untested below q=0.1 (0.1 saturates)
+- Benefit lower bound untested below q=0.1
 - Absolute advantage magnitude is instrument-dependent; the 0%→100%
-  contrast is not — the classical barrier is a structural −1e6 spike,
-  not a tuned number
+  contrast is not — the classical barrier is structural (−1e6 spike),
+  not tuned

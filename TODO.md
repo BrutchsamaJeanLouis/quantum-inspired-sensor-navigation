@@ -70,11 +70,12 @@
 
 ## Priority 6: Follow-ups (new, from v2 results)
 
-- [ ] Finer q-sweep in moving scenario (0.05-0.5) to resolve coupling-liability curve
+- [x] Finer q-sweep in moving scenario (examples/q_sweep_moving.py, 8×10 runs): NO systematic liability — v2's 97→39% slope was seed luck; effect is a modest low-q bump (0.67±0.44 @q≤0.1 vs 0.45), n.s. at n=10 (p≥0.11). Retracted in docs/RESULTS.md §4.
+- [ ] Moving scenario at n≥50 seeds to resolve the weak quantum effect (classical baseline is deterministic 0.00 std, so n is the bottleneck)
 - [ ] ε-greedy stochastic classical baseline control (strengthen v2 comparison)
 - [ ] Phi metric wired into ablation harness (thresholds: phi row in readme)
 - [ ] Path-efficiency ratio metric (threshold: 15%)
-- [ ] Paper (8-12 pages): forensics → tunnel → collapse ablation → moving-target tradeoff
+- [ ] Paper (8-12 pages): forensics → tunnel → collapse ablation → moving-scenario null (honest edge case)
 - [ ] Demo video: tunnel scenario with phi overlay as centerpiece
 - [ ] Interactive controls: click to add energy/obstacles, coupling slider (real dial now)
 
