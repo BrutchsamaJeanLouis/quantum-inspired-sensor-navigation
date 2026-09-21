@@ -1,71 +1,95 @@
 # QIWM Scrapbook
 
-## 2026-08-19: Product Owner Session — the null hypothesis is dead
+## 2026-09-21 (2): PO session — Phi re-scope (P7) → §4i, formally retracted
 
-### The story in one paragraph
-v1 ablations showed zero quantum advantage. Forensics proved the instrument
-was broken, not the hypothesis: (1) the pilot wave dissipated 2%/step so
-`quantum_coupling` multiplied ~0.004 at any distance — a no-op slider;
-(2) q=0.0 "classical" agents ran the quantum Boltzmann sampler (coherence
-gate init 1.0 > 0.7 threshold); (3) the maze dead-end trap was geometrically
-unreachable (0 agent-steps inside it, measured). After recalibrating the
-instrument, the same harness gives: **classical 0/20 cross a gapless wall
-and 0% survive; quantum 20/20 cross, 100% survive (p ≤ 2.4e-5)**.
+- `compute_phi_agents` (src/core/coherence.py): re-scoped agent-in-the-loop,
+  agent-localised Φ. Per agent, a (2·r+1)² window (r=4) around its *current*
+  position; forward-sim `steps`=5 WITH the whole swarm stepping
+  (sense/decide/move/collapse); max(0, corr(t0_R,t1_R) − corr(boundary_t0_R,t1_R))
+  on the guidance field the agent perceives, averaged over agents. Deep-copies
+  (world, agents). Wired behind `ExperimentConfig.phi_agent_in_loop` (default OFF
+  → 400-run v2 dataset byte-identical). 5 new unit tests; suite 102→107 green.
+- `examples/phi_rescope.py` → `phi_rescope.csv` (default, n=10, 500 steps,
+  collapse ON). **RESULT: classical pinned 1.0000 (±0.0000); quantum 0.8740
+  ±0.0125 (0.8546–0.8883). Ratio 0.874 — NOT MET vs 1.5×, DIRECTION REVERSED
+  (quantum lower).** Moving scenario: classical 1.0000, quantum 0.4630±0.1965
+  — same direction. Direction consistent across 3 probe designs (field-only
+  1.000 §4e; swarm-centroid quantum-lower §4e; agent-local quantum-lower §4i).
+- Instrument property (documented, not a finding): classical=1.0000 in every
+  scenario because its perceived field is the deterministic potential, locally
+  STATIC over the 5-step horizon → t0_R≡t1_R → self-predictability 1.0 (ceiling).
+  Quantum <1.0 because the perceived guidance field adds the diffusive pilot-wave
+  channel (gain 3000·normalize(pilot)), evolving → less self-predictable over 5
+  steps. Magnitude partly a ceiling effect; DIRECTION is the robust signal.
+- PO decision: **formally retract the "quantum Φ is 1.5× classical" threshold as
+  stated; retain re-scoped Φ as a clean agent–world-coupling diagnostic**
+  (instrumentation improvement — the original measured field self-organization,
+  1.000, not coupling). Documented HONESTLY in RESULTS.md §4i + readme
+  (threshold status + repro row). Paper carries it as an honest negative with a
+  fixed instrument + consistent direction, not a silent null.
 
-### Changes shipped
-- `quantum_world.py`: guidance = `grid + q·gain·(pilot/pmax)`; new
-  `pilot_wave_gain=3000`, `pilot_wave_dissipation=0.9999` (was 0.98)
-- `experiments.py`: dt default 0.1→0.2 (stable limit 0.25), 2000-step
-  prewarm, new **tunnel** scenario (128-cell gapless wall, radius 2.0,
-  source far-side), `barrier_crossings` metric
-- `agents.py`: q=0 → classical argmax decision (quantum sampler only if
-  `quantum_coupling > 0`)
-- `examples/analyze_results.py` (new): mean±std tables + Mann-Whitney U
-  (scipy, numpy permutation fallback) → `docs/RESULTS.md` (idempotent)
-- Tests: 52 → 63 passing (guidance normalization, tunnel geometry,
-  wall-leak, barrier metric, q=0 classical guard, sampling test)
-- Docs: `docs/RESULTS.md` (full report + interpretation), readme
-  Results section, TODO.md re-planned
+## 2026-09-21: PO session — ε-sweep curve (§4h) + tunnel demo GIFs
 
-### v2 headline numbers (400 runs, `ablation_results_v2.csv`)
-| scenario | classical q=0 | quantum | p |
-|---|---|---|---|
-| tunnel | 0% alive, 0 cross | 100%, 20/20 | ≤2.4e-5 |
-| maze | 0% | 100% (all q>0) | ≤1.6e-5 |
-| single_source | 20% | 100% | ≤1.6e-5 |
-| default | 45% | 90% @0.3/0.5 | 7.6e-4 |
-| moving | 45% | 68%@0.05 (p<5e-5), → baseline by q≥0.2 | n=50: monotone |
+- `examples/epsilon_sweep_tunnel.py` → `epsilon_sweep_tunnel.csv`
+  (7 arms × 10 seeds, tunnel/torus/v2 instrument): alive 0 → 48.0±7.8 →
+  66.5±11.6 → 79.0±12.6 → 83.5±12.3 (ε→0.3). Parity with quantum
+  (100±0, 20/20) NOT reached; latency quantum med 2.2 vs 11–28 ε-arms
+  (5–12×); ε-taxonomy stable (77–84% wall walk-throughs, seam flat
+  ~2/run, 2-cell jumps 0.3→1.6/run); interaction arm q=0.3/ε=0.1 benign
+  (100%, 20/20 seam, med 2.7, overlapping seed ranges). Paper framing:
+  the tradeoff is *route for the same price*, not parity. RESULTS.md
+  §4h + §4b pointer.
+- `examples/tunnel_demo_gif.py`: headless (SDL dummy) WorldVisualizer
+  frame capture → animated GIF + optional PNG frames; configs quantum
+  (q=0.3) / classical (q=0.0), v2 constants, 20 agents corner spawn,
+  prewarm 2000. Final-frame check: quantum 20/20 alive @750 steps vs
+  classical 0/20 — the A/B centerpiece. Artifacts:
+  tunnel_demo_{quantum,classical}.gif (150f @12fps). pillow →
+  requirements.
+- **Bootstrap 95% CIs (P7 closed):** analyze_results.py gains
+  bootstrap_ci/delta_ci (2000 resamples, fixed seed); the 95% CI column
+  is on every summary alive-rate row and the Δ-mean 95% CI on all
+  U-test comparisons (alive/energy/crossings). docs/RESULTS.md
+  regenerated (interpretation §4a–§4h preserved).
+- **Repro quickstart (P7 closed):** readme “Reproducing the headline
+  numbers” table — every headline claim → exact command → CSV/section.
+  All commands executed: 6 audit CSVs md5-stable on re-run; v2 + n50
+  reproduce every headline rate (dead-end 0/194/132/77; §4a curve to
+  3rd decimal). ε-sweep CLI → argparse; phase4_full_demo sys.path fix.
+- **CI + energy budget + interactive UI (P7/P4 closed):**
+  .github/workflows/ci.yml (pytest, SDL-dummy 15s smoke rc=124,
+  --export; steps verified locally); energy_budget.py →
+  energy_budget.csv (break-even net = h·S−50 per 50-step window);
+  visualizer: L/R click-to-add, draggable coupling slider (live),
+  K_r double-bind fix.
+- Tests 81→102; UI smoke (interactive rc=124 + --export rc=0) clean.
+  Remaining: phi re-scope; paper + demo video (dedicated sessions).
 
-Collapse ablation: static geometries need only the pilot-wave channel
-(collapse-off still wins); in moving/trapped fields, quantum agents
-WITHOUT collapse do *worse* than classical (0-48%) — the collapse/coherence
-decision gate is the survival mechanism. Moving scenario at n=50: monotone curve 68%@0.05→44%@0.5
-(p<5e-5→n.s.). Tunnel taxonomy: quantum crossings = 100% seam
-wraps (torus shortcut), 0 wall jumps; ε-noise leaks the wall;
-classical gradient always points at the wall. Dead-end escapes: 194/132/77 quantum-only, 0 classical.
+## 2026-08-20 (compressed): closed boundary + late metrics
 
-### Instrument ASCII
-```
-source ──inject──▶ pilot_wave (Laplacian dt=0.2, κ=0.9999)
-                     │  leaks through walls (no obstacle mask)
-                     ▼
-guidance = grid + q·3000·(pilot/pmax)      ◀── q=0 ⇒ classical argmax only
-                     │
-        NanoAgent: coherence>0.7 ? Boltzmann : greedy-argmax
-                     │  step → collapse_field (coherence×0.9, wave×1.1)
-                     ▼
-        tunnel: wall cell −1e6 (unlandable), adjacent −22,
-                far-side quantum term +12…+61 ⇒ quantum-only crossing
-```
+- **Closed boundaries (§4g):** no channel penetrates an impenetrable
+  barrier — without the torus seam quantum crosses 0/20 (0% alive);
+  ε0.1 walk-throughs at 25% alive. Quantum value = exhaustive non-local
+  exploration of locally invisible routes.
+- **Path efficiency (§4f, 15% NOT MET):** quantum 0.5055 vs classical
+  1.0207 (default); maze: classical 0/20 reached, quantum 20/20 @0.894.
+- **Phi (§4e, 1.5× NOT MET):** ratio 1.000; phi measures field
+  self-organization, not agent-world coupling.
+- **Maze route audit (§4d):** quantum 20/20 reach via 100% edge wraps —
+  same global-route mechanism.
+- **Anticipation (§4c, honest null):** nobody anticipates; quantum
+  monotonically reduces lag (index −4.09→−1.39, frac ahead 0→0.10).
 
-### Open / next (Priority 6 in TODO.md)
-1. Maze route audit (does that advantage also reduce to global route discovery?)
-2. Phi metric into the harness (readme threshold: quantum_phi > 1.5×)
-3. Path-efficiency ratio (threshold 15%)
-4. Paper: forensics → tunnel taxonomy → collapse → coupling curve
-5. Demo video: tunnel seam shortcut + phi overlay
+## 2026-08-19 (compressed): the null hypothesis is dead
 
-### Caveats to carry into the paper
-- n=10/config; moving-scenario variance is high (bimodal seeds)
-- Benefit lower bound untested below q=0.1
-- Absolute advantage magnitude is instrument-dependent; the 0%→100% contrast is not (structural −1e6 spike)
+- v1 flat ablations = broken instrument (2%/step dissipation; q=0 agents
+  ran the quantum sampler; unreachable dead-end trap). v2 instrument
+  (gain 3000, dt 0.2, diss 0.9999, prewarm 2000, q=0 argmax guard):
+  tunnel 0%→100% alive (p≤2.4e-5); maze/single_source 0%→100%; default
+  45%→90%.
+- Re-scoped (§4b): quantum tunnel crossings are 100% seam wraps —
+  separates *determinism vs exploration*; ε-greedy leaks too. Moving:
+  real monotone coupling-liability curve at n=50 (0.679@q=0.05 →
+  baseline by q≥0.2) — interior optimum at weak coupling.
+- Caveat: advantage magnitude instrument-dependent; 0%→100% contrast is
+  not (structural −1e6 wall).

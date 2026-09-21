@@ -10,6 +10,55 @@ deliverable_pair:
   - research_paper: "8-12 pages, metrics/ablations/theory"
   - interactive_demo: "Pygame visualization + GitHub + video"
 
+## Start Here: the plain-English version (beginner-friendly, no physics required)
+
+**One line:** tiny video-game characters try to survive in a grid world by chasing food and dodging rocks. We give some of them a weird "intuition" inspired by quantum physics, and check whether that makes them better at surviving than plain logic.
+
+### What's in the project
+
+Think of a 128×128 chessboard (the "world"):
+
+- **Food** (energy sources) — glowing spots that pull things toward them, like magnets. Walk close and you gain energy.
+- **Rocks** (obstacles) — push things away. Some levels have a wall with a single gap in it (the "tunnel" level).
+- **20 tiny agents** — dots on the board. Each starts with 100 energy; every step costs 1 energy; at 0 energy the agent dies. Keep finding food and you survive.
+
+Agents can feel the "pull" of food and rocks (the world computes a field of forces, like a map of slopes). The whole question is one decision: **which direction should an agent step next?**
+
+- **Classical agent (baseline):** *step wherever the pull is strongest.* Like rolling downhill. Fine, but it gets stuck in dead ends — "always follow the slope" never says "maybe I should backtrack".
+- **Quantum-inspired agent (the experiment):** real quantum particles don't behave like tiny balls — they spread out like a **wave** that explores many paths at once, and only "picks" a location when measured. We copy that idea (inspired by, not literally doing quantum mechanics): the agent keeps a **pilot wave** — a faint possibility-ripple around it — so it doesn't just follow the slope blindly; and it occasionally **collapses**, snapping its uncertainty down to "I am here now". The difference vs. the classical agent: a hiker who only looks at the steepest slope downhill, versus one who also vaguely senses which way they've already been, and occasionally stops to re-check the map.
+- **The Φ (phi) part:** a number meant to measure how much of the surroundings are self-organized versus chaotic noise. It's the most experimental feature — wired in and measured, but not yet showing a big difference (honestly noted in the docs).
+
+### It's a research project, not a product
+
+Built like a science experiment:
+
+- Change **one thing at a time** (e.g. quantum on vs off), rerun the same level 400 times with different random starts ("seeds") so luck can't fake the result.
+- **Measure:** survival rate, longevity, energy efficiency, dead-end escapes.
+- **The null hypothesis is stated up front:** "quantum-inspired dynamics give *no* advantage over plain gradient descent" — and the goal is to try to prove that false.
+
+### What the results actually say
+
+Honest, measured findings:
+
+- **Tunnel level:** classical agents die on the wall — 0% survive. Quantum agents: 100%. That's the headline.
+- **But** a classical agent with a little random exploration added ("epsilon") also survives a lot (~84%). Quantum isn't magic — it's a *reliable* route, and randomness is a cheaper partial alternative.
+- On the "moving food" level, **too much** quantum coupling actually hurts — there's a sweet spot.
+
+The honest scientific story: "we found a setting where quantum-inspired agents clearly beat plain logic (dead-end escape), quantified exactly how much, and also found where they don't help."
+
+### Why anyone would do this
+
+The real question underneath: **could "wavy, probabilistic" thinking beat "pure logic" for navigation in messy, uncertain environments?** If these dumb dots in a grid benefit, maybe bigger AI agents in real mazes, cities, or robotics would too. A tiny, cheap experiment standing in for a much bigger idea.
+
+### Where to look
+
+- `src/core/` — the simulation (world, agents, the quantum-inspired bits)
+- `src/visualization/` — draws it on screen (play: click to add food/rocks, drag the coupling slider)
+- `examples/` — every number in the paper is a script that reproduces it exactly (see "Reproducing the headline numbers" below)
+- `tests/` — 102 automated checks · `docs/RESULTS.md` — the actual statistics
+
+Try it: `pip install -r requirements.txt` then `python main.py`.
+
 ## Philosophical Grounding
 conceptual_bridge: "Embodied intuition as field-participation mechanics"
 theoretical_inspiration:
@@ -192,7 +241,7 @@ headline_numbers:
   single_source: "classical 20% → quantum 100% (p ≤ 1.6e-5)"
   default: "classical 45% → quantum 90% at q=0.3/0.5 (p ≈ 7.6e-4)"
   moving: "n=50 sweep: 68% at q=0.05 (p<5e-5) → 44% at q=0.5 — real monotone coupling-liability curve, optimum at weak coupling"
-  crossing_taxonomy: "ALL quantum tunnel crossings are seam wraps (torus shortcut, ~2.5-step latency); 0 wall jumps; ε-noise (ε=0.1 → 68% alive) leaks via wall jumps — the tunnel separates determinism-vs-exploration, not quantum-vs-classical per se"
+  crossing_taxonomy: "ALL quantum tunnel crossings are seam wraps (torus shortcut, ~2.5-step latency); 0 wall jumps, 0 wall walk-throughs; ε-noise leaks mostly via coarse walk-throughs of the wall cell — closed-boundary control: WITHOUT the seam quantum crosses 0 (alive 0%), ε0.1 walks through at 25% alive — NO channel penetrates an impenetrable barrier (§4g)"
 
 collapse_ablation: "static: pilot wave suffices (collapse off OK); dynamic/trapped: quantum agents WITHOUT collapse do WORSE than classical — collapse gate is the survival mechanism"
 
@@ -201,13 +250,42 @@ device_forensics: "v1 instrument was broken (dead quantum channel, quantum sampl
 thresholds_met:
   survival: "YES — 0% → 100%, far beyond the 20% threshold"
   escape_rate: "YES — tunnel 0 vs 20/20; dead-end escapes quantum-only (194/132/77 vs 0)"
-  efficiency: "PARTIAL — survival/escape measured; path-efficiency ratio pending"
-  phi: "PENDING — phi metric not yet wired into the ablation harness"
+  efficiency: "NOT MET as directness threshold — quantum 0.5055 vs classical 1.0207 (default, ratio 0.495 < 1.15); quantum trades directness for reachability (maze: classical 0/20 reached vs quantum 20/20 @ 0.894); see RESULTS.md §4f"
+  phi: "NOT MET; formally re-scoped + retracted (§4i). Original field-only probe ratio 1.000 (§4e). Re-scoped agent-in-the-loop, agent-localised coupling Φ (compute_phi_agents): classical pinned 1.0000, quantum 0.8740 (default) / 0.4630 (moving) — direction REVERSED (quantum lower), consistent across 3 probe designs. The '1.5× higher' threshold is retracted as stated; re-scoped Φ retained as a clean agent–world-coupling diagnostic (see RESULTS.md §4i)"
 
 artifacts:
   data: "ablation_results_v2.csv (400 runs)"
   analysis: "examples/analyze_results.py → docs/RESULTS.md; examples/q_sweep_moving.py → q_sweep_moving{n,_n50}.csv"
   runner: "examples/run_ablation_study.py --scenario all --runs 10"
+
+## Reproducing the headline numbers
+
+Every headline claim above and in docs/RESULTS.md §4 comes from a
+committed script with fixed seeds. Re-running a command below
+regenerates the committed artifact with identical values (verified:
+six audit CSVs are md5-stable on re-run; the v2 and n50 datasets
+reproduce every headline rate exactly and now also carry the
+crossing-classification / energy columns added after the first
+export).
+
+| headline number | command | data |
+|---|---|---|
+| v2 ablations: tunnel 0%→100%, maze/single_source 0%→100%, default 45%→90% (§4a); dead-end escapes 0/194/132/77 (§5) | `python examples/run_ablation_study.py --scenario all --runs 10 --output ablation_results_v2.csv` (400 runs, ~10 min) | `ablation_results_v2.csv` |
+| RESULTS.md summary tables + U-tests + CIs | `python examples/analyze_results.py --input ablation_results_v2.csv --output docs/RESULTS.md` | `docs/RESULTS.md` |
+| moving coupling-liability curve, 50 seeds: 0.679@q=0.05 → baseline by q≥0.2 (§4a) | `python examples/q_sweep_moving.py --runs 50 --output q_sweep_moving_n50.csv` | `q_sweep_moving_n50.csv` |
+| moving anticipation lag (quantum only; §4c) | `python examples/moving_anticipation_n10.py` | `moving_anticipation_n10.csv` |
+| maze route audit: 20/20 reach, 100% seam wraps (§4d) | `python examples/maze_route_audit.py` | `maze_route_audit.csv` |
+| phi wiring audit: ratio 1.000, NOT MET (§4e) | `python examples/phi_audit.py` | `phi_audit.csv` |
+| phi re-scope (agent-in-the-loop, §4i): ratio 0.874, direction reversed, formally retracted | `python examples/phi_rescope.py` | `phi_rescope.csv` |
+| path efficiency 0.5055 vs 1.0207; maze 0/20 vs 20/20@0.894 (§4f) | `python examples/path_efficiency.py --scenario default --runs 10` and `--scenario maze --runs 10` | `path_efficiency_{default,maze}.csv` |
+| closed-boundary audit: quantum 0/20, ε walk-throughs 25% (§4g) | `python examples/tunnel_closed_audit.py` | `tunnel_closed_audit.csv` |
+| tunnel ε-sweep curve: 0→48→66.5→79→83.5% (§4h) | `python examples/epsilon_sweep_tunnel.py` | `epsilon_sweep_tunnel.csv` |
+| demo GIFs (quantum 20/20 vs classical 0/20 alive) | `python examples/tunnel_demo_gif.py` and `--config classical` | `tunnel_demo_{quantum,classical}.gif` |
+
+Energy-budget cost structure (paper methods): `python examples/energy_budget.py` → `energy_budget.csv`.
+
+Run interactively: `python main.py` (left-click adds energy, right-click adds obstacle, drag the top-right slider to set coupling) · static export: `python main.py --export`.
+Unit tests: `python -m pytest tests -q` (91 tests).
 
 ## Parameter Space (Initial Values)
 world_config:

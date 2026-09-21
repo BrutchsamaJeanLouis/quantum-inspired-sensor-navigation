@@ -15,8 +15,10 @@ High Φ regions: self-organized (maintain structure despite environment)
 Low Φ regions: externally-driven (passive response)
 """
 
+import copy
+
 import numpy as np
-from typing import Tuple, Union
+from typing import List, Tuple, Union
 from .toy_world import ToyWorld
 
 
@@ -74,6 +76,113 @@ def compute_phi(
     phi = max(0.0, internal_corr - external_corr)
 
     return float(phi)
+
+
+def compute_phi_agents(
+    world: Union[ToyWorld, 'QuantumInspiredWorld'],
+    agents: List,
+    local_radius: int = 4,
+    steps: int = 5,
+) -> float:
+    """
+    Re-scoped, agent-in-the-loop, agent-localised IIT-inspired Phi.
+
+    The original ``compute_phi`` ran an *agent-less* forward sim on a fixed
+    region, so it measured the FIELD's self-organization (ratio ~1.0 across
+    conditions). This variant measures **agent-world coupling**:
+
+    * **Agent-in-the-loop:** the forward simulation lets the whole swarm step
+      (sense/decide/move/collapse), so Penrose-style observation (collapse)
+      is part of the co-dynamics, not an afterthought.
+    * **Agent-localized:** each agent's neighbourhood (a
+      ``(2*local_radius+1)^2`` window around its *current* position) is probed,
+      and the result is averaged over agents. The probe is therefore where the
+      system actually is, not a fixed region the agents never occupy.
+
+    For each agent at (x, y):
+        phi_i = max(0, corr(t0_R, t1_R) - corr(boundary_t0_R, t1_R))
+    where R is the local window, t0/t1 are the *guidance field* (what the agent
+    perceives) before/after the agent-in-the-loop forward sim, and boundary is
+    the 1-cell ring around R sampled at t0 (external drive).
+
+    The (world, agents) pair is deep-copied, so the live world/agents are not
+    mutated. Returns the mean of phi_i over agents (>= 0.0; 0.0 if no agents).
+
+    Args:
+        world: ToyWorld / QuantumInspiredWorld.
+        agents: list of agents (positions read; a deep copy is stepped).
+        local_radius: half-width of the per-agent probe window (default 4 -> 9x9).
+        steps: forward-simulation steps with agents in the loop (default 5).
+
+    Returns:
+        Mean per-agent local Phi (float, >= 0.0).
+    """
+    # Deep-copy the PAIR so the single world copy is shared by every agent copy
+    # (agents reference world; world does not reference agents).
+    world_c, agents_c = copy.deepcopy((world, agents))
+
+    if not agents_c:
+        return 0.0
+
+    # t0: the guidance field the agents actually perceive (before evolution).
+    t0_full = world_c.get_guidance_field() if hasattr(world_c, 'get_guidance_field') \
+        else world_c.grid
+
+    # Record positions; they will move during the forward sim.
+    positions = [(int(a.x), int(a.y)) for a in agents_c]
+
+    # Forward simulation WITH the swarm in the loop.
+    for _ in range(steps):
+        if hasattr(world_c, 'update_pilot_wave'):
+            world_c.update_pilot_wave(dt=world_c.diffusion_rate)
+        else:
+            world_c.compute_potential_field()
+        for a in agents_c:
+            if a.alive:
+                a.step()
+
+    t1_full = world_c.get_guidance_field() if hasattr(world_c, 'get_guidance_field') \
+        else world_c.grid
+    size = world_c.size
+    r = int(local_radius)
+
+    phis = []
+    for (x, y) in positions:
+        x0, x1 = max(0, x - r), min(size - 1, x + r)
+        y0, y1 = max(0, y - r), min(size - 1, y + r)
+        if (x1 - x0) < 2 or (y1 - y0) < 2:
+            continue
+        t0_R = t0_full[x0:x1 + 1, y0:y1 + 1].flatten()
+        t1_R = t1_full[x0:x1 + 1, y0:y1 + 1].flatten()
+        boundary_t0 = _local_ring(t0_full, (x0, y0, x1, y1))
+        internal = _correlation(t0_R, t1_R)
+        external = _correlation(boundary_t0, t1_R)
+        phis.append(max(0.0, internal - external))
+
+    return float(np.mean(phis)) if phis else 0.0
+
+
+def _local_ring(field: np.ndarray, region: Tuple[int, int, int, int]) -> np.ndarray:
+    """
+    Extract the 1-cell outer ring of a sub-array (external drive boundary).
+
+    Args:
+        field: full 2D field.
+        region: (x_min, y_min, x_max, y_max) inclusive, clamped to field bounds.
+
+    Returns:
+        1-D array of the ring's cell values (corners duplicated once; fine for
+        a Pearson correlation).
+    """
+    x0, y0, x1, y1 = region
+    sub = field[x0:x1 + 1, y0:y1 + 1]
+    parts = [
+        sub[0, :].flatten(),
+        sub[-1, :].flatten(),
+        sub[1:-1, 0].flatten(),
+        sub[1:-1, -1].flatten(),
+    ]
+    return np.concatenate(parts)
 
 
 def compute_phi_map(
