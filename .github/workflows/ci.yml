@@ -1,0 +1,43 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Unit tests
+        run: python -m pytest tests -q
+
+      - name: Headless UI smoke (interactive loop must still be running at t=15s)
+        run: |
+          export SDL_VIDEODRIVER=dummy
+          set +e
+          timeout 15 python main.py
+          rc=$?
+          set -e
+          echo "exit=$rc (expect 124 = loop alive when timeout hit)"
+          test "$rc" -eq 124
+
+      - name: Static export smoke
+        run: |
+          export SDL_VIDEODRIVER=dummy
+          python main.py --export
+          ls *.png

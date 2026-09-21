@@ -43,12 +43,17 @@ class QuantumInspiredWorld(ToyWorld):
         pilot_wave_gain: float = 3000.0,
         pilot_wave_dissipation: float = 0.9999,
         classical_epsilon: float = 0.0,
+        torus: bool = True,
     ):
         """
         Initialize quantum-inspired world.
 
         Args:
             size: Grid dimension (default: 128x128)
+            torus: True = positions wrap at edges (default); False = closed
+                boundary, positions clamp at edges (edge wraps become dead
+                ends — used to test whether seam-shortcut results are a
+                torus artifact).
             quantum_coupling: Weight of pilot wave in guidance field (default: 0.3)
             diffusion_rate: Pilot wave diffusion rate (default: 0.1)
             collapse_coherence_decay: Coherence multiplier on collapse (default: 0.9)
@@ -63,6 +68,7 @@ class QuantumInspiredWorld(ToyWorld):
                 (zero-coupling or low-coherence) decision steps (default 0.0
                 = deterministic argmax). Used for stochastic classical
                 control baselines.
+            torus: See above (default True).
         """
         super().__init__(size)
         self.pilot_wave = np.zeros((size, size), dtype=np.float32)
@@ -74,6 +80,7 @@ class QuantumInspiredWorld(ToyWorld):
         self.pilot_wave_dissipation = pilot_wave_dissipation
         self.collapse_coherence_decay = collapse_coherence_decay
         self.collapse_wave_amplify = collapse_wave_amplify
+        self.torus = torus
 
     def update_pilot_wave(self, dt: float = None) -> None:
         """

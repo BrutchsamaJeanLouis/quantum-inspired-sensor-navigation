@@ -73,6 +73,49 @@ def _permutation_p(a, b, nsim=20000, seed=0):
     return max(count, 1) / nsim
 
 
+def bootstrap_ci(values, n_boot: int = 2000, ci: float = 0.95, seed: int = 0):
+    """Nonparametric bootstrap confidence interval for the mean."""
+    v = np.asarray(values, dtype=float)
+    if v.size == 0:
+        return (float('nan'), float('nan'))
+    rng = np.random.default_rng(seed)
+    idx = rng.integers(0, v.size, size=(n_boot, v.size))
+    means = v[idx].mean(axis=1)
+    alpha = (1.0 - ci) / 2.0
+    return (float(np.quantile(means, alpha)), float(np.quantile(means, 1 - alpha)))
+
+
+def delta_ci(a, b, n_boot: int = 2000, ci: float = 0.95, seed: int = 0):
+    """Bootstrap CI for the difference of means (b - a)."""
+    a = np.asarray(a, dtype=float)
+    b = np.asarray(b, dtype=float)
+    if a.size == 0 or b.size == 0:
+        return (float('nan'), float('nan'))
+    rng = np.random.default_rng(seed)
+    ia = rng.integers(0, a.size, size=(n_boot, a.size))
+    ib = rng.integers(0, b.size, size=(n_boot, b.size))
+    diffs = b[ib].mean(axis=1) - a[ia].mean(axis=1)
+    alpha = (1.0 - ci) / 2.0
+    return (float(np.quantile(diffs, alpha)), float(np.quantile(diffs, 1 - alpha)))
+
+
+def fmt_ci(vals, n_boot: int = 2000, seed: int = 0) -> str:
+    lo, hi = bootstrap_ci(vals, n_boot=n_boot, seed=seed)
+    if np.isnan(lo) or np.isnan(hi):
+        return "–"
+    return f"[{lo:.3f}, {hi:.3f}]"
+
+
+def fmt_delta_ci(a, b, n_boot: int = 2000, seed: int = 0) -> str:
+    """Format mean diff with its bootstrap 95% CI: '+0.550 [+0.300, +0.750]'."""
+    a = np.asarray(a, dtype=float)
+    b = np.asarray(b, dtype=float)
+    if a.size == 0 or b.size == 0:
+        return "–"
+    lo, hi = delta_ci(a, b, n_boot=n_boot, seed=seed)
+    return f"{b.mean() - a.mean():+.3f} [{lo:+.3f}, {hi:+.3f}]"
+
+
 def main():
     parser = argparse.ArgumentParser(description="Analyze QIWM ablation results")
     parser.add_argument('--input', default='ablation_results_v2.csv')
@@ -103,10 +146,12 @@ def main():
     for scenario in scenarios:
         lines.append(f"### {scenario}")
         lines.append("")
-        header = "| collapse | coupling | alive rate | survival steps | final energy |"
+        header = ("| collapse | coupling | alive rate | 95% CI (bootstrap) "
+                  "| survival steps | final energy |")
         if scenario == 'tunnel':
-            header = "| collapse | coupling | barrier crossings | alive rate | survival steps |"
-        lines += [header, "|---|---|---|---|---|"]
+            header = ("| collapse | coupling | barrier crossings | alive rate "
+                      "| 95% CI (bootstrap) | survival steps |")
+        lines += [header, "|---|---|---|---|---|---|"]
 
         for collapse in collapses:
             for q in couplings:
@@ -121,16 +166,26 @@ def main():
                     cross = [float(r['barrier_crossings']) for r in rs]
                     lines.append(
                         f"| {collapse} | {q} | {fmt_mean_std(cross)} "
-                        f"| {fmt_mean_std(alive)} | {fmt_mean_std(surv)} |")
+                        f"| {fmt_mean_std(alive)} | {fmt_ci(alive)} "
+                        f"| {fmt_mean_std(surv)} |")
                 else:
                     lines.append(
                         f"| {collapse} | {q} | {fmt_mean_std(alive)} "
-                        f"| {fmt_mean_std(surv)} | {fmt_mean_std(energy)} |")
+                        f"| {fmt_ci(alive)} | {fmt_mean_std(surv)} "
+                        f"| {fmt_mean_std(energy)} |")
         lines.append("")
 
-    lines += ["## Statistical tests (collapse ON: quantum vs classical)", ""]
-    lines.append("| scenario | comparison | n | U-test p-value | verdict |")
-    lines.append("|---|---|---|---|---|")
+    lines += [
+        "## Statistical tests (collapse ON: quantum vs classical)",
+        "",
+        "Multi-agent comparison across all scenarios × 10 seeds: survival "
+        "(alive rate) and efficiency (final energy = harvesting over the run), "
+        "quantum q>0 vs classical q=0. n=20 per row (10 classical + 10 "
+        "quantum seeds).",
+        "",
+        "| scenario | comparison | n | Δ mean (95% CI, bootstrap) | U-test p-value | verdict |",
+        "|---|---|---|---|---|---|",
+    ]
 
     for scenario in scenarios:
         for collapse in [c for c in collapses if c == 'True']:
@@ -147,7 +202,17 @@ def main():
                 verdict = "reject H₀" if p < 0.05 else "insufficient evidence"
                 lines.append(
                     f"| {scenario} | alive rate q={q} vs q=0 | "
-                    f"{len(a)+len(b)} | {p:.2e} | {verdict} |")
+                    f"{len(a)+len(b)} | {fmt_delta_ci(a, b)} | {p:.2e} | {verdict} |")
+
+                # Efficiency: final energy (harvesting efficiency over the
+                # run), quantum vs classical.
+                e0 = [float(r['avg_final_energy']) for r in classical]
+                e1 = [float(r['avg_final_energy']) for r in quantum]
+                pe = mann_whitney_u(e0, e1)
+                verdict_e = "reject H₀" if pe < 0.05 else "insufficient evidence"
+                lines.append(
+                    f"| {scenario} | final energy q={q} vs q=0 | "
+                    f"{len(e0)+len(e1)} | {fmt_delta_ci(e0, e1)} | {pe:.2e} | {verdict_e} |")
 
                 if scenario == 'tunnel':
                     a2 = [float(r['barrier_crossings']) for r in classical]
@@ -156,7 +221,7 @@ def main():
                     verdict2 = "reject H₀" if p2 < 0.05 else "insufficient evidence"
                     lines.append(
                         f"| {scenario} | barrier crossings q={q} vs q=0 | "
-                        f"{len(a2)+len(b2)} | {p2:.2e} | {verdict2} |")
+                        f"{len(a2)+len(b2)} | {fmt_delta_ci(a2, b2)} | {p2:.2e} | {verdict2} |")
 
     interp_existing = None
     if os.path.exists(args.output):

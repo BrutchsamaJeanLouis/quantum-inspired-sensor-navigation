@@ -36,6 +36,7 @@ def main():
         'avg_survival_steps', 'max_survival_steps', 'avg_final_energy',
         'avg_steps_taken', 'deadend_escapes', 'barrier_crossings',
         'final_coherence_mean', 'final_pilot_wave_mean',
+        'anticipatory_index_mean', 'anticipatory_frac_mean',
     ]
 
     rows = []

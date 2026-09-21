@@ -73,6 +73,7 @@ class NanoAgent:
         self.alive = True
         self.trail: List[Tuple[int, int]] = [(self.x, self.y)]
         self.x_traj: List[int] = [self.x]
+        self.y_traj: List[int] = [self.y]
         self.steps_taken = 0
         self.energy_source_cooldown: List[int] = [0] * len(world.energy_sources)
         self.in_dead_end = False
@@ -209,9 +210,13 @@ class NanoAgent:
         # Decide direction
         dx, dy = self.decide_action()
 
-        # Move (wrap around edges)
-        new_x = (self.x + dx) % self.world.size
-        new_y = (self.y + dy) % self.world.size
+        # Move (wrap around edges on a torus, clamp on a closed boundary)
+        if getattr(self.world, 'torus', True):
+            new_x = (self.x + dx) % self.world.size
+            new_y = (self.y + dy) % self.world.size
+        else:
+            new_x = max(0, min(self.world.size - 1, self.x + dx))
+            new_y = max(0, min(self.world.size - 1, self.y + dy))
 
         # Trigger collapse (quantum world only)
         if hasattr(self.world, 'collapse_field'):
@@ -221,6 +226,7 @@ class NanoAgent:
         self.x = new_x
         self.y = new_y
         self.x_traj.append(self.x)
+        self.y_traj.append(self.y)
         self.steps_taken += 1
 
         # Update trail

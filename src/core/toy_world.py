@@ -35,6 +35,7 @@ class ToyWorld:
             size: Dimension of the square grid (default: 128x128)
         """
         self.size = size
+        self.torus = True
         self.grid = np.zeros((size, size), dtype=np.float32)
         self.energy_sources: List[Tuple[int, int, float]] = []
         self.obstacles: List[Tuple[int, int, float]] = []

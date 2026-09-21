@@ -136,6 +136,130 @@ class TestCrossingLatencyMetrics:
         assert math.isnan(d['first_crossing_latency_mean'])
 
 
+class TestClosedBoundary:
+    """Closed (non-torus) boundary: edge wraps become dead ends (P7)."""
+
+    def test_closed_world_flag(self):
+        world = create_scenario_world('tunnel', 128, 0.5, 0.1, 0.0,
+                                      boundary='closed')
+        assert world.torus is False
+
+    def test_closed_tunnel_has_no_seam_crossings(self):
+        """With clamped edges, torus-wrap events are impossible."""
+        config = ExperimentConfig(scenario='tunnel', quantum_coupling=0.5,
+                                 collapse_enabled=True, seed=0, barrier_x=64,
+                                 max_steps=500, boundary='closed')
+        d = run_single_experiment(config).to_dict()
+        assert d['seam_crossings'] == 0
+        assert d['edge_crossings'] == 0
+        assert isinstance(d['barrier_crossings'], int)
+
+
+class TestPathEfficiency:
+    """Path-efficiency ratio: direct geodesic distance / steps to arrival."""
+
+    def test_path_efficiency_in_unit_interval(self):
+        """Quantum default agents reach sources; efficiency in (0, 1]."""
+        config = ExperimentConfig(scenario='default', quantum_coupling=0.3,
+                                 collapse_enabled=True, seed=0,
+                                 max_steps=500)
+        d = run_single_experiment(config).to_dict()
+        assert d['path_eff_reached'] > 0
+        assert 0.0 < d['path_eff_mean'] <= 1.0
+
+    def test_path_efficiency_keys_always_present(self):
+        """Keys exist even when nobody reached (reached=0, mean=nan)."""
+        import math
+        config = ExperimentConfig(scenario='tunnel', quantum_coupling=0.0,
+                                 collapse_enabled=True, seed=0,
+                                 max_steps=30)
+        d = run_single_experiment(config).to_dict()
+        assert 'path_eff_reached' in d and 'path_eff_mean' in d
+        if d['path_eff_reached'] == 0:
+            assert math.isnan(d['path_eff_mean'])
+
+
+class TestPhiHarnessMetric:
+    """Phi (IIT coherence) wired into the ablation harness."""
+
+    def test_phi_metric_present_and_nonnegative(self):
+        """Every run samples phi >= 0; world state must survive the call."""
+        config = ExperimentConfig(scenario='default', quantum_coupling=0.0,
+                                 collapse_enabled=True, seed=0,
+                                 max_steps=250)
+        m = run_single_experiment(config)
+        d = m.to_dict()
+        assert np.isfinite(d['phi_mean'])
+        assert d['phi_mean'] >= 0.0
+        assert d['phi_final'] >= 0.0
+        assert len(m.phi_samples) == 3  # steps 0, 100, 200
+
+    def test_phi_copy_does_not_mutate_live_world(self):
+        """Phi sampling on a copy must not advance the live world state.
+
+        The harness deep-copies before compute_phi; verify the invariant
+        directly: phi on a copy leaves the source world's pilot wave intact.
+        """
+        import copy
+        from src.core.coherence import compute_phi
+        from src.core.quantum_world import QuantumInspiredWorld
+        world = QuantumInspiredWorld(size=64, quantum_coupling=0.3)
+        world.add_energy_source(20, 20, strength=100.0)
+        world.compute_potential_field()
+        for _ in range(100):
+            world.update_pilot_wave(dt=0.2)
+        wave_before = world.pilot_wave.copy()
+        _phi = compute_phi(copy.deepcopy(world), (10, 10, 40, 40), steps=5)
+        assert np.array_equal(world.pilot_wave, wave_before)
+
+
+class TestMazeRouteAudit:
+    """Maze route audit: goal reached via crafted gap vs torus-edge wrap."""
+
+    def test_quantum_maze_agents_reach_goal(self):
+        """Quantum maze agents reach the goal and route is classified."""
+        config = ExperimentConfig(scenario='maze', quantum_coupling=0.5,
+                                 collapse_enabled=True, seed=0, max_steps=500,
+                                 goal=(110, 110))
+        d = run_single_experiment(config).to_dict()
+        assert d['maze_goal_reached'] > 0
+        assert 0.0 <= d['maze_route_gap_frac'] <= 1.0
+        assert 0.0 <= d['maze_route_edge_frac'] <= 1.0
+        assert d['maze_route_gap_frac'] + d['maze_route_edge_frac'] <= 1.0 + 1e-9
+
+    def test_no_goal_scenario_reports_zero(self):
+        """Scenarios without a configured goal report zero/nan."""
+        import math
+        config = ExperimentConfig(scenario='single_source', max_steps=50,
+                                 seed=0)
+        d = run_single_experiment(config).to_dict()
+        assert d['maze_goal_reached'] == 0
+        assert math.isnan(d['maze_route_gap_frac'])
+        assert math.isnan(d['maze_route_edge_frac'])
+
+
+class TestMovingAnticipation:
+    """Anticipatory positioning metric (moving scenario, Priority 2)."""
+
+    def test_moving_anticipation_metrics_present(self):
+        """Moving scenario reports finite anticipatory index and frac in [0,1]."""
+        config = ExperimentConfig(scenario='moving', quantum_coupling=0.3,
+                                 collapse_enabled=True, seed=0,
+                                 max_steps=200)
+        d = run_single_experiment(config).to_dict()
+        assert np.isfinite(d['anticipatory_index_mean'])
+        assert 0.0 <= d['anticipatory_frac_mean'] <= 1.0
+
+    def test_static_scenario_anticipation_is_nan(self):
+        """Non-moving scenarios report nan (metric is moving-scenario only)."""
+        import math
+        config = ExperimentConfig(scenario='single_source', max_steps=50,
+                                 seed=0)
+        d = run_single_experiment(config).to_dict()
+        assert math.isnan(d['anticipatory_index_mean'])
+        assert math.isnan(d['anticipatory_frac_mean'])
+
+
 class TestCrossingTaxonomy:
     """The quantum tunnel crossing is a seam wrap, not a wall jump."""
 

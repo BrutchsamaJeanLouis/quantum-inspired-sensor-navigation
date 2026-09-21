@@ -71,6 +71,9 @@ class WorldVisualizer:
         self.interactive_mode = True  # Enable click interactions
         self.obstacle_radius = 8.0
         self.energy_strength = 100.0
+        # Coupling slider (top-right); value 0.0-1.0, drag to adjust
+        self.coupling_slider_rect = pygame.Rect(window_size - 230, 10, 220, 16)
+        self._coupling_dragging = False
 
         # Save initial world state for reset
         self._initial_world_state = {
@@ -249,7 +252,8 @@ class WorldVisualizer:
             info_lines.append(f"Avg Steps: {stats.get('avg_steps', 0):.1f}")
 
         info_lines.append(f"FPS: {int(self.clock.get_fps())}")
-        info_lines.append("[ESC] Exit | [P] Phi | [T] Trails | [R] Reset | [L/R] Coupling")
+        info_lines.append("[ESC] Exit | [P] Phi | [T] Trails | [R] Reset | [L]/[U] Coupling")
+        info_lines.append("[Drag top-right slider] Set coupling")
         info_lines.append("[L-Click] Add Energy | [R-Click] Add Obstacle")
 
         y_offset = 10
@@ -271,6 +275,7 @@ class WorldVisualizer:
         self.render_obstacles()
         self.render_energy_sources()
         self.render_info()
+        self._render_coupling_slider()
         pygame.display.flip()
 
     def run(self, update_callback: Optional[callable] = None) -> None:
@@ -298,13 +303,14 @@ class WorldVisualizer:
                         self._reset_world()
                     elif event.key == pygame.K_l:
                         self._adjust_coupling(-0.05)
-                    elif event.key == pygame.K_r:
+                    elif event.key == pygame.K_u:
                         self._adjust_coupling(0.05)
-                elif event.type == pygame.MOUSEBUTTONDOWN and self.interactive_mode:
-                    if event.button == 1:  # Left click - add energy source
-                        self._add_energy_at_click(event.pos)
-                    elif event.button == 3:  # Right click - add obstacle
-                        self._add_obstacle_at_click(event.pos)
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    self._handle_mouse_down(event)
+                elif event.type == pygame.MOUSEMOTION:
+                    self._handle_mouse_motion(event)
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    self._coupling_dragging = False
 
             # Update world if callback provided
             if update_callback:
@@ -326,6 +332,47 @@ class WorldVisualizer:
         y = int(pos[1] / self.scale)
         return (max(0, min(self.world.size - 1, x)),
                 max(0, min(self.world.size - 1, y)))
+
+    def _handle_mouse_down(self, event) -> None:
+        """Mouse-down: coupling slider drag, else click-to-add (if interactive)."""
+        if hasattr(self.world, 'quantum_coupling') and \
+                self.coupling_slider_rect.collidepoint(event.pos):
+            self._coupling_dragging = True
+            self._set_coupling_from_x(event.pos[0])
+            return
+        if not self.interactive_mode:
+            return
+        if event.button == 1:  # Left click - add energy source
+            self._add_energy_at_click(event.pos)
+        elif event.button == 3:  # Right click - add obstacle
+            self._add_obstacle_at_click(event.pos)
+
+    def _handle_mouse_motion(self, event) -> None:
+        """Mouse-move: while dragging, slider sets coupling from cursor x."""
+        if self._coupling_dragging and event.buttons[0]:
+            self._set_coupling_from_x(event.pos[0])
+
+    def _set_coupling_from_x(self, x: int) -> None:
+        """Map cursor x to coupling 0.0-1.0 from the slider bar."""
+        r = self.coupling_slider_rect
+        frac = max(0.0, min(1.0, (x - r.left) / r.width))
+        if hasattr(self.world, 'quantum_coupling'):
+            self.world.quantum_coupling = round(frac, 2)
+
+    def _render_coupling_slider(self) -> None:
+        """Draw the coupling slider (quantum worlds only)."""
+        if not hasattr(self.world, 'quantum_coupling'):
+            return
+        r = self.coupling_slider_rect
+        pygame.draw.rect(self.screen, (40, 40, 40), r)
+        pygame.draw.rect(self.screen, (255, 255, 255), r, 1)
+        fill_w = int(r.width * self.world.quantum_coupling)
+        if fill_w > 0:
+            pygame.draw.rect(self.screen, (0, 140, 255),
+                             (r.left, r.top, fill_w, r.height))
+        font = pygame.font.Font(None, 20)
+        label = font.render(f"q={self.world.quantum_coupling:.2f}", True, (255, 255, 255))
+        self.screen.blit(label, (r.left, r.top - 20))
 
     def _add_energy_at_click(self, pos: Tuple[int, int]) -> None:
         """Add an energy source at click position."""
