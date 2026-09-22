@@ -32,9 +32,19 @@ stated**; re-scoped Φ retained as a clean coupling diagnostic (instrumentation
 improvement — it now measures coupling, not field self-organization 1.000).
 
 ## Deferred (dedicated sessions)
-- [ ] Research paper (8-12 pages): forensics → tunnel → collapse ablation → moving null → phi re-scope (§4i)
-- [ ] Demo video: tunnel A/B centerpiece (GIFs exist) + phi overlay (P key)
-- [ ] GitHub repo polish (stale CLAUDE.md "Phase 1" status, doc cross-refs)
+- [x] Research paper (8-12 pages) → `docs/PAPER.md` (draft complete, ~4.2k words,
+      Abstract + 7 sections + data/code availability; ε-sweep table verified
+      against epsilon_sweep_tunnel.csv). Story: forensics → tunnel → collapse
+      ablation → moving null → phi re-scope (§4i).
+- [x] Demo video → `examples/make_demo_video.py` → `demo_video.mp4` (21s, h264,
+      250 frames) + `demo_video.gif`. 3 segments: (A) tunnel A/B classical|quantum,
+      (B) P-key coherence/Φ overlay, (C) headline summary card. Verified all 3
+      frames render correctly.
+- [x] GitHub repo polish: CLAUDE.md (status/phases/structure/classes/commands/
+      refs/null-hyp), readme.md (deliverable checklist [x], start_here),
+      QUICKSTART.md (What's Working/Next), PROJECT_STRUCTURE.md (module tree +
+      phase status). All referenced docs verified to exist; ablation cmd fixed
+      to `run_ablation_study.py --runs 10 --output ablation_results_v2.csv`.
 
 ## Completed
 (see git log; prior sessions) — Phases 1–5 code, v2 ablations (null H₀ rejected 4/5),

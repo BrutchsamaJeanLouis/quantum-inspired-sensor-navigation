@@ -7,7 +7,11 @@ qwm-core/
 ├── src/                          # Source code
 │   ├── core/                     # Core physics simulation
 │   │   ├── __init__.py
-│   │   └── toy_world.py         # Phase 1: Classical world model
+│   │   ├── toy_world.py         # Phase 1: Classical world model
+│   │   ├── quantum_world.py     # Phase 2: pilot wave + collapse + guidance field
+│   │   ├── coherence.py         # Phase 3: IIT-inspired Φ (compute_phi, compute_phi_agents §4i)
+│   │   ├── agents.py            # Phase 4: AgentSwarm (sense/decide/move/collapse, y_traj)
+│   │   └── experiments.py       # v2 ablation harness + scenario factory + metrics
 │   ├── visualization/            # Rendering and display
 │   │   ├── __init__.py
 │   │   └── visualizer.py        # Pygame-based visualization
@@ -19,11 +23,12 @@ qwm-core/
 │   ├── phase1_basic_demo.py     # Interactive demo
 │   └── phase1_export_demo.py    # Static export demo
 │
-├── tests/                        # Unit tests (TODO)
-│   └── test_toy_world.py
+├── tests/                        # Unit tests (107)
+│   └── test_*.py                # per-module + validation suites
 │
-├── docs/                         # Documentation (TODO)
-│   └── phase1_validation.md
+├── docs/                         # Documentation
+│   ├── RESULTS.md               # ablations, instrument forensics, §4i
+│   └── PAPER.md                 # 8-12 page research paper
 │
 ├── main.py                       # Main entry point
 ├── requirements.txt              # Python dependencies
@@ -78,20 +83,16 @@ python examples/phase1_basic_demo.py
 python examples/phase1_export_demo.py
 ```
 
-## Phase 1 Objectives
+## Phase Status
 
-✅ **Completed:**
-- Project structure setup
-- ToyWorld classical physics simulation
-- Pygame visualization
-- Matplotlib export functionality
-- Example demos
+✅ **Phases 1–4 complete:**
+- Phase 1: ToyWorld classical physics, Pygame visualization, Matplotlib export
+- Phase 2: `quantum_world.py` — pilot wave + Penrose collapse + guidance field
+- Phase 3: `coherence.py` — IIT-inspired Φ (`compute_phi`, `compute_phi_agents` §4i)
+- Phase 4: `agents.py` — AgentSwarm navigation (Boltzmann/argmax, `y_traj`)
+- 107 unit tests; 400-run ablation dataset (byte-reproducible); `docs/PAPER.md`
 
-⏳ **Next Steps (Week 2):**
-- Parameter optimization (grid size, performance)
-- Validation metrics implementation
-- Unit test suite
-- Performance profiling with Numba
+⏳ **Next:** push to GitHub, confirm CI green. (Numba JIT = optional optimization.)
 
 ## Development Guidelines
 
@@ -115,27 +116,20 @@ pytest tests/
 pytest --cov=src tests/
 ```
 
-## Future Phases
+## Phase Deliverables (status)
 
-### Phase 2: Quantum-Inspired Dynamics
-- Add `quantum_world.py` extending ToyWorld
-- Implement pilot wave field
-- Add collapse mechanics
+### Phase 2: Quantum-Inspired Dynamics ✅
+- `quantum_world.py`: pilot wave field, collapse mechanics, guidance field
 
-### Phase 3: IIT Coherence
-- Add `coherence.py` module
-- Implement Φ (phi) calculation
-- Validation metrics
+### Phase 3: IIT Coherence ✅
+- `coherence.py`: Φ (phi) calculation + agent-coupling re-scope (§4i)
 
-### Phase 4: Bio-Inspired Agents
-- Add `agents/` directory
-- Implement NanoAgent class
-- Navigation experiments
+### Phase 4: Bio-Inspired Agents ✅
+- `agents.py`: AgentSwarm (NanoAgent) navigation + experiments
 
-### Phase 5: Entertainification
-- Enhanced UI/UX
-- Interactive level editor
-- Export/share functionality
+### Phase 5: Entertainification (partial)
+- Interactive demo + P-key Φ overlay + `demo_video.mp4` done
+- Interactive level editor, export/share: future work
 
 ## Notes
 

@@ -344,23 +344,23 @@ philosophy: "dialogue with system (responsive) NOT monologue (prescriptive)"
 - emergence = teacher (let weird behaviors guide you)
 - honest framing = integrity ("inspired by" explicit throughout)
 
-## Deliverable Checklist
-- [ ] ToyWorld class (classical physics)
-- [ ] QuantumInspiredWorld class (pilot wave + collapse)
-- [ ] compute_phi function (IIT metric)
-- [ ] NanoAgent class (bio-inspired navigation)
-- [ ] Pygame visualization (heatmaps, sprites, controls)
-- [ ] Experimental scenarios (3+ configurations)
-- [ ] Metrics logging (CSV export)
-- [ ] Ablation studies (quantum components on/off)
-- [ ] Research paper (LaTeX/Markdown)
-- [ ] Demo video (screen recording + voiceover)
-- [ ] GitHub repo (code + README + requirements.txt)
+## Deliverable Checklist (all [x] as of paper+video session)
+- [x] ToyWorld class (classical physics)
+- [x] QuantumInspiredWorld class (pilot wave + collapse)
+- [x] compute_phi function (IIT metric) + compute_phi_agents (§4i re-scope)
+- [x] AgentSwarm class (bio-inspired navigation; NanoAgent)
+- [x] Pygame visualization (heatmaps, sprites, controls, P-key Φ overlay)
+- [x] Experimental scenarios (5 configurations: default/tunnel/maze/single_source/moving)
+- [x] Metrics logging (CSV export)
+- [x] Ablation studies (coupling × collapse, 400-run v2 dataset)
+- [x] Research paper (docs/PAPER.md, 8-12 pp)
+- [x] Demo video (demo_video.mp4 + demo_video.gif)
+- [x] GitHub repo (code + README + requirements.txt)
 
 ## Entry Point for Agent
-start_here: "Phase 1 — implement ToyWorld.compute_potential_field() with numpy"
-first_validation: "matplotlib heatmap of energy sources + obstacles"
-next_step_trigger: "when heatmap shows correct gradients → proceed to Phase 2"
+status: "Phases 1-4 complete; research paper + demo video done; all 11 deliverables [x]."
+start_here: "Review docs/PAPER.md + docs/RESULTS.md; run `pytest tests/ -q` (107); then push to GitHub."
+next_step_trigger: "After push: confirm the 400-run ablation_results_v2.csv + demo_video.mp4 are committed and reproducible."
 ```
 
 ---

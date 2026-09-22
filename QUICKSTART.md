@@ -165,22 +165,22 @@ qwm-core/
 - See [readme.md](readme.md) for full project plan
 - Review code comments in `src/core/toy_world.py`
 
-## What's Working (Phase 1 ✅)
+## What's Working (Phases 1–4 ✅)
 
-- ✅ Classical potential field simulation
-- ✅ Energy sources (attractors)
-- ✅ Obstacles (repulsors)
-- ✅ Real-time Pygame visualization
-- ✅ Matplotlib export
-- ✅ Example scenarios
-- ✅ Unit tests
+- ✅ Classical potential field simulation (Phase 1)
+- ✅ Energy sources (attractors), obstacles (repulsors), torus boundary
+- ✅ Quantum-inspired pilot wave + Penrose collapse (Phase 2)
+- ✅ IIT-inspired Φ metric + agent-coupling re-scope (§4i) (Phase 3)
+- ✅ AgentSwarm navigation: Boltzmann/argmax, closed boundary, `y_traj` (Phase 4)
+- ✅ Real-time Pygame visualization (P-key Φ overlay) + `demo_video.mp4`
+- ✅ 400-run ablation dataset (byte-reproducible) + 107 unit tests
+- ✅ Research paper (`docs/PAPER.md`) + results (`docs/RESULTS.md`)
 
-## What's Next (Phase 2 ⏳)
+## What's Next (⏳)
 
-- ⏳ Quantum-inspired pilot wave field
-- ⏳ Collapse dynamics (Penrose-inspired)
-- ⏳ Non-local correlations
-- ⏳ Numba JIT optimization
+- ⏳ Push to GitHub (`git remote -v`); confirm CI green
+- ⏳ Optional: Numba JIT for hot loops (optimization, not required)
+- ⏳ Future work: larger/multi-scale worlds (documented, not in scope)
 
 ---
 

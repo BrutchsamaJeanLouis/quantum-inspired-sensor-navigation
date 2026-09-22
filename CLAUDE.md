@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Quantum-Inspired World Model (QIWM)** - A 5-phase research project building bio-inspired AI agents that navigate using quantum-inspired world models (Bohmian pilot waves, Penrose collapse, IIT coherence).
 
-**Current Status**: Phase 1 complete (classical baseline). Ready for Phase 2 (quantum-inspired dynamics).
+**Current Status**: Phases 1–4 implemented (classical baseline, quantum-inspired dynamics, IIT-inspired Φ, agent swarms). Project is at the **research-paper + interactive-demo** stage. See `docs/PAPER.md` and `docs/RESULTS.md`.
 
 **Key Constraint**: Runs on modest hardware (i3-4100 CPU, 63GB RAM, 16GB VRAM). Target 15-30 FPS with 128×128 grids.
 
@@ -30,14 +30,17 @@ python examples/phase1_export_demo.py
 
 ### Testing
 ```bash
-# Run all unit tests
-pytest tests/test_toy_world.py -v
-
-# Run with coverage
-pytest --cov=src tests/
+# Run all unit tests (107)
+pytest tests/ -q
 
 # Validate Phase 1 completion (5 automated suites)
 python tests/validate_phase1.py
+
+# Regenerate the 400-run ablation dataset (byte-reproducible, ~71s)
+python examples/run_ablation_study.py --runs 10 --output ablation_results_v2.csv
+
+# Generate the demo video (A/B + Φ overlay + summary card)
+python examples/make_demo_video.py
 ```
 
 ### Performance Profiling
@@ -50,23 +53,27 @@ python -m cProfile -s cumtime main.py --export > profile.txt
 
 ### Core Conceptual Stack (5 Phases)
 ```
-Phase 5: Entertainification (UI/UX sandbox)
-Phase 4: Bio-Inspired Agents (NanoAgent navigation)
-Phase 3: IIT Coherence (Φ calculation)
-Phase 2: Quantum-Inspired Dynamics (pilot waves, collapse)
-Phase 1: Classical Baseline (ToyWorld) ← CURRENT
+Phase 5: Entertainification (UI/UX sandbox)              [partial: interactive demo, P-key Φ overlay, demo_video.mp4]
+Phase 4: Bio-Inspired Agents (NanoAgent navigation)      [done]
+Phase 3: IIT Coherence (Φ calculation)                   [done, re-scoped §4i]
+Phase 2: Quantum-Inspired Dynamics (pilot waves, collapse) [done]
+Phase 1: Classical Baseline (ToyWorld)                   [done]
 ```
 
 ### Code Structure
 ```
 src/
-  core/         - Physics simulation (ToyWorld, future: QuantumInspiredWorld)
-  visualization/- Pygame + Matplotlib rendering
-  utils/        - Shared utilities (currently minimal)
-
-examples/       - Runnable demos
-tests/          - Unit tests + validation suites
-docs/           - Phase validation criteria
+  core/
+    toy_world.py     - Phase 1 classical potential field (1/r energy, obstacles, torus)
+    quantum_world.py - Phase 2 pilot wave + collapse + guidance field
+    coherence.py     - Phase 3 IIT-inspired Φ (compute_phi, compute_phi_agents §4i)
+    agents.py        - Phase 4 AgentSwarm (sense/decide/move/collapse, y_traj)
+    experiments.py   - v2 ablation harness + scenario factory + metrics
+  visualization/
+    visualizer.py    - Pygame heatmap; P key toggles the Φ/coherence overlay
+examples/          - Runnable demos + ablation/audit scripts (one per results table)
+tests/             - Unit tests (107) + validation suites
+docs/              - RESULTS.md, PAPER.md, phase validation criteria
 ```
 
 ### Key Classes
@@ -82,11 +89,19 @@ docs/           - Phase validation criteria
 - Runs at configurable FPS (default: 30)
 - Interactive controls: ESC to exit
 
-**Phase 2 Extension (not yet implemented)**:
-```python
-class QuantumInspiredWorld(ToyWorld):
-    # Adds: pilot_wave field, coherence tracking, collapse mechanics
-```
+**`QuantumInspiredWorld` (src/core/quantum_world.py)** - Phase 2
+- Adds a diffusing pilot-wave field, a coherence field, and a guidance field
+  `= potential + coupling*3000*normalize(pilot_wave)`. `collapse_field(x,y,r)`
+  does Penrose-style coherence decay + wave sharpening. At coupling=0 the
+  perceived field reduces to the classical potential (the honest baseline).
+
+**`AgentSwarm` / `Agent` (src/core/agents.py)** - Phase 4
+- Each step: sense (5×5 patch) → decide (Boltzmann sample / argmax) → move →
+  collapse. Records survival, energy, crossings, trajectory (`y_traj`).
+
+**`compute_phi_agents` (src/core/coherence.py)** - Phase 3, re-scoped (§4i)
+- Agent-in-the-loop, agent-localised Φ coupling diagnostic. The 1.5×
+  "quantum higher" threshold is formally retracted; see docs/RESULTS.md §4i.
 
 ## Development Workflow
 
@@ -182,7 +197,10 @@ When quantum-inspired features are added (Phase 2+):
 
 ### Null Hypothesis
 "Quantum-inspired dynamics provide no advantage over classical gradient descent."
-Goal: Falsify this with 10-20% improvements.
+**Status: rejected in 4 of 5 scenarios** (tunnel, maze, single-source, default;
+the moving scenario shows a coupling-dependent advantage at low q). Mechanism is
+global route discovery via the leaked pilot wave, not wall penetration. See
+docs/RESULTS.md §4, §4b, §4h and docs/PAPER.md.
 
 ## File Naming Conventions
 
@@ -204,9 +222,10 @@ Goal: Falsify this with 10-20% improvements.
 ## References
 
 - **Full Project Plan**: See readme.md for detailed phase breakdowns
-- **Architecture Guide**: PROJECT_STRUCTURE.md for module organization
+- **Research Paper**: docs/PAPER.md (8-12 pp; every number traceable to a CSV)
+- **Results**: docs/RESULTS.md (ablations, instrument forensics, §4i Φ re-scope)
 - **Quick Start**: QUICKSTART.md for setup and first run
-- **Phase 1 Status**: PHASE1_COMPLETE.md for what's implemented
+- **Phase 1 Status**: PHASE1_COMPLETE.md
 
 ## When in Doubt
 
