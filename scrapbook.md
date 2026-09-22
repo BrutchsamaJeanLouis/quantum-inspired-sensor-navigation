@@ -1,5 +1,31 @@
 # QIWM Scrapbook
 
+## 2026-09-22: PO session — research paper + demo video + repo polish (all TODOs [x])
+
+- **`docs/PAPER.md`** (new): 8–12 pp research paper — Abstract + 7 sections
+  (intro, method, experimental design incl. v1→v2 instrument forensics,
+  results §4.1–4.9, discussion, limitations, conclusion, data/code
+  availability). Every number traced to a committed CSV. §4.8 ε-sweep table
+  corrected to exact per-config values from `epsilon_sweep_tunnel.csv`
+  (ε ∈ {0.05,0.1,0.2,0.3}; quantum q=0.3; median 1st-crossing latency 2.0 vs
+  7.0–21.5 for the ε-arms; parity 100% never reached).
+- **`examples/make_demo_video.py`** (new): headless tunnel sim → 3-segment
+  video: (A) classical|quantum A/B, (B) P-key coherence/Φ overlay, (C) headline
+  summary card → `demo_video.mp4` (21 s, h264) + `.gif` (both gitignored, like
+  the tunnel GIFs). All 3 segments visually inspected.
+- **Repo polish:** CLAUDE.md (phases 1–4 status, real module tree, key classes
+  incl. `compute_phi_agents`, correct ablation cmd `run_ablation_study.py
+  --runs 10`, null-hyp status = rejected 4/5), readme.md (deliverable
+  checklist all [x], fresh start_here), QUICKSTART.md, PROJECT_STRUCTURE.md
+  (module tree + phase status).
+- **Verification:** compileall clean; `pytest tests -q` → **107 passed**; UI
+  interactive (15 s headless, exit 124 = ran to timeout) + export (exit 0).
+  No git remote configured, so push is a no-op. Tree clean.
+- **PO decision:** the project's two headline deliverables (paper + demo video)
+  are now DONE, on top of the settled phi story (§4i). Scope is closed except
+  optional push (needs `git remote add origin …`) and future-work items
+  (Numba JIT, larger worlds) that are documented, not in-scope.
+
 ## 2026-09-21 (2): PO session — Phi re-scope (P7) → §4i, formally retracted
 
 - `compute_phi_agents` (src/core/coherence.py): re-scoped agent-in-the-loop,
