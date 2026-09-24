@@ -1,54 +1,19 @@
-# QIWM TODO
+# TODO.md — QIWM
 
-## Active — PO session (2026-09-21): Phi re-scope (P7)
+## Active PO session (2026-09-24): LLM-driven tick control + render fixes
+- [x] `src/core/timeline.py` — TimelinePlayer (deterministic step/seek/rebuild; seek(n) ≡ live tick n)
+- [x] `main.py` CLI: `--scenario {default,maze}`, `--seed`, `--replay T1 T2...`, `--shot TICK --out FILE`
+- [x] Visualizer: bottom tick slider (0..500), Space pause/resume, ←/→ scrub (Shift ×10), Home seek 0, L/U coupling
+- [x] Render bug fixes: energy-source radius `strength^0.5*scale*0.5`; field normalization p1..p99 percentiles
+- [x] Tests: `tests/test_timeline.py` (8) + `tests/test_tick_slider.py` (5) → **120 passed** (was 107)
+- [x] Headless `--shot 120 --out` verified: deterministic (same seed ⇒ identical pixels), white ratio 87%→4.3%, 1197 colors
+- [x] Live GUI pause + keyboard scrub verified earlier (zero pixel-diff while paused; 6628↔6633 step)
+- [x] Live GUI: pause (zero pixel-diff), keyboard scrub (6628↔6633), ESC clean shutdown (exit 0), full-window render (PrintWindow: info panel + both sliders + fixed field) verified live; seek wiring proven by 5 deterministic unit tests on the exact live handlers (`_handle_mouse_down`→`_set_tick_from_x`→`player.seek`→`_sync_player`). Live PostMessage click/drag dispatched (window 800×800 logical, DPI-virtualized to 1000×1000 phys; GetClientRect=800×800 ⇒ logical coords correct); on this SDL2/Windows env PostMessage'd keys reach pygame but mouse events don't register — environmental, not code (see scrapbook 2026-09-24)
+- [x] Update scrapbook.md (2026-09-24 session entry)
+- [x] git commit (M main.py, M visualizer.py, ?? timeline.py, tests, postkey/postmouse)
+- [x] Final smoke test: `--shot 120` ×2 independent runs → pixel-identical (max diff 0,0,0); pytest → 120 passed
 
-**PO decision:** the one open scientific question is the phi threshold (§4e, ratio
-1.000 vs 1.5×). Root cause (diagnosed, not fudge): `compute_phi` runs an
-*agent-less* forward sim on a *fixed central region* the agents never occupy →
-it measures FIELD self-organization, not agent–world coupling. Implement the
-principled re-scope the backlog names (agent-in-the-loop + agent-localized),
-define it BEFORE looking at the number, run the n=10 audit, report direction
-honestly (met, or formally retracted as a clean diagnostic). Keep the 400-run
-v2 dataset untouched (new config flag, default OFF).
-
-- [x] `compute_phi_agents(world, agents, local_radius, steps)` in src/core/coherence.py
-      — agent-in-the-loop forward sim (agents sense/decide/move/collapse), per-agent
-      localized probe regions, averaged. Deep-copies (world, agents) pair.
-- [x] `ExperimentConfig.phi_agent_in_loop` (default False) + `phi_agent_samples` metric
-      in src/core/experiments.py; wire `phi_agent_mean`/`phi_agent_final` into to_dict().
-- [x] Unit test in tests/test_coherence.py (5 new, suite 102→107).
-- [x] `examples/phi_rescope.py` audit (default scenario, q=0 vs q=0.3, n=10, 500 steps,
-      sample every 100) → `phi_rescope.csv`; print ratio + direction vs 1.5× threshold.
-- [x] Run smoke (1 seed) then full audit; record result.
-- [x] Update docs/RESULTS.md (new §4i) + readme + TODO + scrapbook HONESTLY.
-- [x] Full test suite (107 green) + UI smoke clean; commit.
-
-**RESULT (honest):** Re-scoped agent–world-coupling Φ — classical pinned 1.0000
-(its perceived field is locally static → self-predictability 1.0, an instrument
-property), quantum 0.8740±0.0125 (default) / 0.4630±0.1965 (moving). Ratio
-0.874, **NOT MET** vs 1.5×, **direction REVERSED** (quantum lower). Consistent
-across 3 probe designs. 1.5× "quantum higher" threshold **formally retracted as
-stated**; re-scoped Φ retained as a clean coupling diagnostic (instrumentation
-improvement — it now measures coupling, not field self-organization 1.000).
-
-## Deferred (dedicated sessions)
-- [x] Research paper (8-12 pages) → `docs/PAPER.md` (draft complete, ~4.2k words,
-      Abstract + 7 sections + data/code availability; ε-sweep table verified
-      against epsilon_sweep_tunnel.csv). Story: forensics → tunnel → collapse
-      ablation → moving null → phi re-scope (§4i).
-- [x] Demo video → `examples/make_demo_video.py` → `demo_video.mp4` (21s, h264,
-      250 frames) + `demo_video.gif`. 3 segments: (A) tunnel A/B classical|quantum,
-      (B) P-key coherence/Φ overlay, (C) headline summary card. Verified all 3
-      frames render correctly.
-- [x] GitHub repo polish: CLAUDE.md (status/phases/structure/classes/commands/
-      refs/null-hyp), readme.md (deliverable checklist [x], start_here),
-      QUICKSTART.md (What's Working/Next), PROJECT_STRUCTURE.md (module tree +
-      phase status). All referenced docs verified to exist; ablation cmd fixed
-      to `run_ablation_study.py --runs 10 --output ablation_results_v2.csv`.
-
-## Completed
-(see git log; prior sessions) — Phases 1–5 code, v2 ablations (null H₀ rejected 4/5),
-tunnel ε-sweep, tunnel demo GIFs, bootstrap CIs, CI workflow, energy budget,
-interactive UI, repro quickstart. **Phi re-scope (this session, §4i):** agent-in-
-the-loop, agent-localised coupling Φ — formally retracted the 1.5× "quantum higher"
-threshold (direction reversed, quantum 0.874 vs classical 1.000 default). 107 tests green.
+## Prior session (2026-09-21): Phi re-scope (P7)
+- [x] compute_phi_agents re-scope, ExperimentConfig.phi_agent_in_loop, tests 102→107
+- [x] phi_rescope.py audit, docs/RESULTS.md §4i, PAPER.md update
+- Honest result: 1.5× threshold formally retracted; re-scoped Φ is a coupling diagnostic, not a gap metric

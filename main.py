@@ -1,172 +1,188 @@
+#!/usr/bin/env python3
 """
-Module: main.py
-Depends on:
-  - src.core (ToyWorld, QuantumInspiredWorld, AgentSwarm)
-  - src.visualization (WorldVisualizer, export_field_matplotlib)
+QIWM: Quantum-Inspired World Model
+Phase 1-4 Complete Demo
 
-QIWM - Quantum-Inspired World Model
-Main entry point for running simulations
+Interactive:
+    python main.py
+    python main.py --scenario maze
+    python main.py --seed 7
 
-Usage:
-    python main.py              # Run interactive demo with agents
-    python main.py --export     # Export visualizations only
-    python main.py --maze       # Maze scenario (dead ends test)
-    python main.py --help       # Show help
+Timeline controls (in the window):
+    Space      pause / resume
+    Left/Right scrub +/-1 tick (Shift = +/-10)
+    Home       seek to tick 0
+    bottom slider  drag to scrub 0..500 ticks
+
+Replay mode (screenshot each tick hop, then pause for ESC):
+    python main.py --scenario tunnel --replay 0 30 60 90
+
+Headless single-tick render (the LLM primitive):
+    python main.py --scenario maze --seed 42 --shot 150 --out tick150.png
+    # rewind/replay determinism: --seed fixed => tick N is reproducible
 """
 
-import sys
 import argparse
+import os
+import sys
+import time
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import numpy as np
-from src.core import ToyWorld, QuantumInspiredWorld, AgentSwarm
-from src.visualization import WorldVisualizer, export_field_matplotlib
+import pygame
+
+from src.core.toy_world import ToyWorld
+from src.core.quantum_world import QuantumInspiredWorld
+from src.core.agents import AgentSwarm
+from src.core.timeline import TimelinePlayer
+from src.visualization import WorldVisualizer
 
 
-def setup_world(size: int = 128) -> QuantumInspiredWorld:
-    """Setup default world with energy sources and obstacles."""
+def setup_world() -> QuantumInspiredWorld:
+    """Setup default world (3 sources, 5 obstacles)."""
+    print("Setting up Quantum-Inspired World (Phase 2)...")
     world = QuantumInspiredWorld(
-        size=size,
-        quantum_coupling=0.3,
-        diffusion_rate=0.1,
-    )
-    world.add_energy_source(30, 30, strength=100.0)
-    world.add_energy_source(90, 90, strength=80.0)
-    world.add_energy_source(60, 20, strength=60.0)
-    world.add_obstacle(60, 60, radius=15.0)
-    world.add_obstacle(45, 75, radius=8.0)
-    world.add_obstacle(80, 45, radius=8.0)
-    world.compute_potential_field()
-    return world
-
-
-def setup_maze_world(size: int = 128) -> QuantumInspiredWorld:
-    """Setup maze world with dead ends."""
-    world = QuantumInspiredWorld(
-        size=size,
+        size=128,
         quantum_coupling=0.5,
-        diffusion_rate=0.15,
+        diffusion_rate=0.15
     )
-    world.add_energy_source(110, 110, strength=150.0)
-    # Horizontal wall with gap
-    for x in range(20, 110, 3):
-        if not (60 <= x <= 75):
-            world.add_obstacle(x, 40, radius=2.5)
-    # Vertical wall with gap
-    for y in range(20, 110, 3):
-        if not (50 <= y <= 65):
-            world.add_obstacle(80, y, radius=2.5)
+    # Classic setup: 3 energy sources
+    world.add_energy_source(30, 30, strength=100.0)
+    world.add_energy_source(90, 30, strength=80.0)
+    world.add_energy_source(60, 90, strength=120.0)
+    # Obstacles
+    world.add_obstacle(40, 40, radius=3.0)
+    world.add_obstacle(80, 80, radius=4.0)
+    world.add_obstacle(60, 60, radius=2.5)
+    world.add_obstacle(20, 90, radius=3.5)
+    world.add_obstacle(100, 60, radius=3.0)
     world.compute_potential_field()
+    print(f"World created: {world.size}x{world.size}")
     return world
 
 
-def run_interactive_demo(maze: bool = False):
-    """Run the interactive Pygame visualization with agents."""
-    print("=" * 60)
-    print(f"QIWM: Quantum-Inspired World Model - Interactive Demo")
-    print(f"Scenario: {'Maze' if maze else 'Default'}")
-    print("=" * 60)
+def setup_maze_world() -> QuantumInspiredWorld:
+    """Setup maze world with walls and a single source."""
+    print("Setting up Quantum-Inspired World (maze scenario)...")
+    world = QuantumInspiredWorld(
+        size=128,
+        quantum_coupling=0.5,
+        diffusion_rate=0.15
+    )
+    # Single source far away
+    world.add_energy_source(110, 110, strength=150.0)
+    # Maze walls (vertical bars with gaps)
+    for x in range(20, 110, 3):
+        if not (60 <= x <= 75):  # gap for tunnel
+            world.add_obstacle(x, 40, radius=2.5)
+            world.add_obstacle(x, 70, radius=2.5)
+    return world
 
-    # Setup world
-    if maze:
+
+def build_world_and_swarm(scenario: str, population: int = 20):
+    """Fresh t=0 (world, swarm) pair for the given scenario (TimelinePlayer factory)."""
+    if scenario == 'maze':
         world = setup_maze_world()
     else:
         world = setup_world()
+    swarm = AgentSwarm(world, population=population, spawn_mode='corner')
+    print(f"Spawned {swarm.get_stats()['total']} agents")
+    return world, swarm
 
-    print(f"\nWorld state: {world.get_state()}")
 
-    # Create agent swarm
-    swarm = AgentSwarm(world, population=20, spawn_mode='corner')
-    print(f"Spawned {len(swarm.agents)} agents")
+def parse_args():
+    parser = argparse.ArgumentParser(description='QIWM Interactive Demo')
+    parser.add_argument('--scenario', choices=['default', 'maze'], default='default',
+                        help='Demo scenario (default: default)')
+    parser.add_argument('--seed', type=int, default=42,
+                        help='RNG seed for deterministic replay (default: 42)')
+    parser.add_argument('--replay', type=int, nargs='+', metavar='TICK',
+                        help='Open window, hop to each listed tick (screenshot each), pause')
+    parser.add_argument('--shot', type=int, metavar='TICK',
+                        help='Headless: render the given tick to --out and exit')
+    parser.add_argument('--out', type=str, default='qiwm_tick.png',
+                        help='Output PNG for --shot (default: qiwm_tick.png)')
+    return parser.parse_args()
 
-    # Setup visualization
-    visualizer = WorldVisualizer(world, window_size=800, fps=30)
-    visualizer.set_agents(swarm)
 
-    print("\nStarting visualization...")
+def run_shot_mode(player: TimelinePlayer, out_path: str) -> None:
+    """Headless single-tick render: seek, draw one frame, save PNG."""
+    os.environ['SDL_VIDEODRIVER'] = 'dummy'
+    vis = WorldVisualizer(player.world, window_size=800, fps=30, player=player)
+    vis.render()
+    vis.save_snapshot(out_path)
+    print(f"Tick {player.tick} saved to {out_path}")
+    pygame.quit()
+
+
+def run_replay_mode(player: TimelinePlayer, ticks: list, window_size: int = 800) -> None:
+    """Open the window, hop between the listed ticks (one frame each), then pause.
+
+    This is the LLM-driven path: an operator (or a screenshot loop) can watch
+    the state at any chosen ticks, then the window sits paused for ESC.
+    """
+    vis = WorldVisualizer(player.world, window_size=window_size, fps=30, player=player)
+    for tick in ticks:
+        player.seek(tick)
+        vis._sync_player()
+        vis.render()
+        time.sleep(0.3)
+    vis.playing = False
+    print("Replay done - window paused. Press Space to play, arrows to scrub, ESC to exit.")
+    vis.run()
+
+
+def main() -> None:
+    """Main entry point: interactive demo with a scrubbable timeline."""
+    args = parse_args()
+    print("=" * 60)
+    print("QIWM: Quantum-Inspired World Model - Interactive Demo")
+    print(f"Scenario: {args.scenario}")
+    print(f"Seed: {args.seed}")
+    print("=" * 60)
+
+    player = TimelinePlayer(
+        factory=lambda: build_world_and_swarm(args.scenario),
+        seed=args.seed,
+    )
+    print(f"World state: {player.world.get_state()}")
+
+    if args.shot is not None:
+        player.seek(args.shot)
+        run_shot_mode(player, args.out)
+        return
+
+    if args.replay:
+        run_replay_mode(player, args.replay)
+        return
+
+    # Interactive: window with Space/arrows/slider timeline controls
     print("Controls:")
     print("  ESC - Exit")
     print("  P   - Toggle Phi/Coherence overlay")
     print("  T   - Toggle agent trails")
+    print("  R   - Reset to tick 0 (pauses)")
+    print("  L/U - Adjust coupling")
+    print("  Space - Pause / resume")
+    print("  Left/Right - Scrub ticks (Shift = x10)")
+    print("  Home - Seek to tick 0")
+    print("  Bottom slider - Drag to scrub tick")
     print()
 
-    visualizer.run(update_callback=lambda w: w.update_pilot_wave(dt=0.1))
+    vis = WorldVisualizer(player.world, window_size=800, fps=30, player=player)
+    print("Starting visualization...")
+    vis.run()
 
-    # Print final stats
-    stats = swarm.get_stats()
-    print("\n" + "=" * 60)
+    print()
+    print("=" * 60)
     print("Simulation Complete")
-    print(f"Agents alive: {stats['alive']}/{stats['total']}")
-    print(f"Average steps: {stats.get('avg_steps', 0):.1f}")
-    print(f"Max steps: {stats.get('max_steps', 0)}")
+    stats = player.stats()
+    print(f"Final tick: {stats['tick']}")
+    print(f"Agents alive: {stats['alive']}/{stats['population']}")
+    print(f"Average steps: {stats['avg_steps']:.1f}")
     print("=" * 60)
 
 
-def run_export_mode():
-    """Export visualization as static images."""
-    print("=" * 60)
-    print("QIWM: Export Mode")
-    print("=" * 60)
-
-    world = QuantumInspiredWorld(size=128)
-    world.add_energy_source(64, 64, strength=100.0)
-    world.add_obstacle(32, 32, radius=10.0)
-    world.add_obstacle(96, 96, radius=10.0)
-    world.compute_potential_field()
-
-    for _ in range(100):
-        world.update_pilot_wave(dt=0.1)
-
-    filename = "qiwm_potential_field.png"
-    export_field_matplotlib(world, filename)
-    print(f"\nVisualization exported to: {filename}")
-
-
-def main():
-    """Main entry point with argument parsing."""
-    parser = argparse.ArgumentParser(
-        description="Quantum-Inspired World Model (QIWM)",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-    python main.py                    # Interactive visualization with agents
-    python main.py --export           # Export static image
-    python main.py --maze             # Maze scenario (dead ends test)
-    python main.py --size 256         # Use larger grid
-
-For more examples, see the examples/ directory.
-        """
-    )
-
-    parser.add_argument(
-        '--export',
-        action='store_true',
-        help='Export visualization as image instead of interactive mode'
-    )
-    parser.add_argument(
-        '--maze',
-        action='store_true',
-        help='Run maze scenario (agents must navigate through gaps)'
-    )
-    parser.add_argument(
-        '--size',
-        type=int,
-        default=128,
-        help='Grid size (default: 128)'
-    )
-
-    args = parser.parse_args()
-
-    try:
-        if args.export:
-            run_export_mode()
-        else:
-            run_interactive_demo(maze=args.maze)
-    except KeyboardInterrupt:
-        print("\n\nInterrupted by user")
-        sys.exit(0)
-    except Exception as e:
-        print(f"\nError: {e}", file=sys.stderr)
-        sys.exit(1)
-
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

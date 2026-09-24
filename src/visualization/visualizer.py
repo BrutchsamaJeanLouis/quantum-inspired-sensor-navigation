@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 
 from src.core import NanoAgent, AgentSwarm
+from src.core.timeline import TimelinePlayer
 
 
 class WorldVisualizer:
@@ -32,6 +33,7 @@ class WorldVisualizer:
         fps: int = 30,
         show_phi: bool = False,
         show_trails: bool = True,
+        player: Optional[TimelinePlayer] = None,
     ):
         """
         Initialize the visualizer.
@@ -42,6 +44,9 @@ class WorldVisualizer:
             fps: Target frames per second
             show_phi: Show coherence/phi overlay
             show_trails: Show agent movement trails
+            player: Optional TimelinePlayer. When set, the run loop steps
+                    through the player's deterministic timeline (Space =
+                    pause/resume, arrows = scrub) instead of free-running.
         """
         self.world = world
         self.window_size = window_size
@@ -74,6 +79,13 @@ class WorldVisualizer:
         # Coupling slider (top-right); value 0.0-1.0, drag to adjust
         self.coupling_slider_rect = pygame.Rect(window_size - 230, 10, 220, 16)
         self._coupling_dragging = False
+
+        # Timeline controls (active when a TimelinePlayer is provided)
+        self.player = player
+        self.playing = True
+        self.tick_slider_max = 500  # slider range; player.seek() is unbounded
+        self._tick_slider_rect = pygame.Rect(20, window_size - 34, window_size - 40, 16)
+        self._tick_dragging = False
 
         # Save initial world state for reset
         self._initial_world_state = {
@@ -127,7 +139,10 @@ class WorldVisualizer:
         if self.show_phi and hasattr(self.world, 'coherence'):
             field = self.world.coherence
 
-        vmin, vmax = field.min(), field.max()
+        # Percentile-normalize: 1/r source cells create extreme spikes
+        # (15M+) that would flatten a min/max stretch into a single color.
+        # p1..p99 keeps the bulk of the field readable.
+        vmin, vmax = np.percentile(field, [1, 99])
 
         # Normalize to [0, 1]
         if vmax > vmin:
@@ -159,7 +174,10 @@ class WorldVisualizer:
                 int((ex + 0.5) * self.scale),
                 int((ey + 0.5) * self.scale)
             )
-            radius = max(3, int(strength * 5))
+            # World-space radius, scaled to screen. (Was strength*5 screen
+            # px, i.e. 300-750 px on an 800 px window: the source circle
+            # used to cover the entire field.)
+            radius = max(3, int(strength ** 0.5 * self.scale * 0.5))
 
             # Outer glow
             pygame.draw.circle(self.screen, (255, 255, 100), center, radius + 2)
@@ -252,8 +270,15 @@ class WorldVisualizer:
             info_lines.append(f"Avg Steps: {stats.get('avg_steps', 0):.1f}")
 
         info_lines.append(f"FPS: {int(self.clock.get_fps())}")
-        info_lines.append("[ESC] Exit | [P] Phi | [T] Trails | [R] Reset | [L]/[U] Coupling")
-        info_lines.append("[Drag top-right slider] Set coupling")
+        if self.player is not None:
+            tick = self.player.tick
+            info_lines.insert(-1, f"Tick: {tick}  ({'paused' if not self.playing else 'playing'})")
+            info_lines.append("[ESC] Exit | [P] Phi | [T] Trails | [R] Reset | [L]/[U] Coupling")
+            info_lines.append("[Space] Pause/Play | [<-]/[->] Tick (Shift=x10) | [Home] Tick 0")
+            info_lines.append("[Drag bottom slider] Scrub tick")
+        else:
+            info_lines.append("[ESC] Exit | [P] Phi | [T] Trails | [R] Reset | [L]/[U] Coupling")
+            info_lines.append("[Drag top-right slider] Set coupling")
         info_lines.append("[L-Click] Add Energy | [R-Click] Add Obstacle")
 
         y_offset = 10
@@ -276,6 +301,8 @@ class WorldVisualizer:
         self.render_energy_sources()
         self.render_info()
         self._render_coupling_slider()
+        if self.player is not None:
+            self._render_tick_slider()
         pygame.display.flip()
 
     def run(self, update_callback: Optional[callable] = None) -> None:
@@ -283,7 +310,9 @@ class WorldVisualizer:
         Run the visualization loop.
 
         Args:
-            update_callback: Optional function to call each frame for world updates
+            update_callback: Optional function to call each frame for world updates.
+                             Ignored when a TimelinePlayer is set (the player
+                             owns stepping; this avoids double-stepping).
         """
         self.running = True
 
@@ -305,26 +334,77 @@ class WorldVisualizer:
                         self._adjust_coupling(-0.05)
                     elif event.key == pygame.K_u:
                         self._adjust_coupling(0.05)
+                    elif event.key == pygame.K_SPACE:
+                        self.playing = not self.playing
+                    elif event.key in (pygame.K_LEFT, pygame.K_RIGHT):
+                        if self.player is not None:
+                            base = 10 if event.mod & pygame.KMOD_SHIFT else 1
+                            delta = base if event.key == pygame.K_RIGHT else -base
+                            self.player.seek(self.player.tick + delta)
+                            self._sync_player()
+                    elif event.key == pygame.K_HOME:
+                        if self.player is not None:
+                            self.player.seek(0)
+                            self._sync_player()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     self._handle_mouse_down(event)
                 elif event.type == pygame.MOUSEMOTION:
                     self._handle_mouse_motion(event)
                 elif event.type == pygame.MOUSEBUTTONUP:
                     self._coupling_dragging = False
+                    self._tick_dragging = False
 
-            # Update world if callback provided
-            if update_callback:
-                update_callback(self.world)
+            # TimelinePlayer owns world+swarm and may swap them on rewind.
+            if self.player is not None:
+                if self.playing:
+                    self.player.step(1)
+                self._sync_player()
+            else:
+                # Update world if callback provided
+                if update_callback:
+                    update_callback(self.world)
 
-            # Step agents if swarm exists
-            if self.swarm:
-                self.swarm.step_all()
+                # Step agents if swarm exists
+                if self.swarm:
+                    self.swarm.step_all()
 
             # Render
             self.render()
             self.clock.tick(self.fps)
 
         pygame.quit()
+
+    def _sync_player(self) -> None:
+        """Re-point world/swarm at the player's current (possibly rebuilt) pair."""
+        self.world = self.player.world
+        if self.swarm is not self.player.swarm:
+            self.set_agents(self.player.swarm)
+
+    def _set_tick_from_x(self, x: int) -> None:
+        """Map cursor x to a tick in [0, tick_slider_max] and seek it."""
+        if self.player is None:
+            return
+        r = self._tick_slider_rect
+        frac = max(0.0, min(1.0, (x - r.left) / r.width))
+        self.player.seek(int(round(frac * self.tick_slider_max)))
+        self._sync_player()
+
+    def _render_tick_slider(self) -> None:
+        """Draw the tick scrubber (bottom of the window)."""
+        r = self._tick_slider_rect
+        pygame.draw.rect(self.screen, (40, 40, 40), r)
+        pygame.draw.rect(self.screen, (255, 255, 255), r, 1)
+        tick = self.player.tick
+        frac = min(1.0, tick / self.tick_slider_max) if self.tick_slider_max else 0.0
+        fill_w = int(r.width * frac)
+        if fill_w > 0:
+            pygame.draw.rect(self.screen, (90, 200, 90),
+                             (r.left, r.top, fill_w, r.height))
+        font = pygame.font.Font(None, 20)
+        state = 'PAUSED' if not self.playing else 'playing'
+        label = font.render(f"tick {tick} [{state}] - Space to pause/resume",
+                            True, (255, 255, 255))
+        self.screen.blit(label, (r.left, r.top - 22))
 
     def _screen_to_world(self, pos: Tuple[int, int]) -> Tuple[int, int]:
         """Convert screen coordinates to world coordinates."""
@@ -334,11 +414,16 @@ class WorldVisualizer:
                 max(0, min(self.world.size - 1, y)))
 
     def _handle_mouse_down(self, event) -> None:
-        """Mouse-down: coupling slider drag, else click-to-add (if interactive)."""
+        """Mouse-down: slider drags, else click-to-add (if interactive)."""
         if hasattr(self.world, 'quantum_coupling') and \
                 self.coupling_slider_rect.collidepoint(event.pos):
             self._coupling_dragging = True
             self._set_coupling_from_x(event.pos[0])
+            return
+        if self.player is not None and \
+                self._tick_slider_rect.collidepoint(event.pos):
+            self._tick_dragging = True
+            self._set_tick_from_x(event.pos[0])
             return
         if not self.interactive_mode:
             return
@@ -348,9 +433,11 @@ class WorldVisualizer:
             self._add_obstacle_at_click(event.pos)
 
     def _handle_mouse_motion(self, event) -> None:
-        """Mouse-move: while dragging, slider sets coupling from cursor x."""
+        """Mouse-move: while dragging, sliders set their values from cursor x."""
         if self._coupling_dragging and event.buttons[0]:
             self._set_coupling_from_x(event.pos[0])
+        if self._tick_dragging and event.buttons[0] and self.player is not None:
+            self._set_tick_from_x(event.pos[0])
 
     def _set_coupling_from_x(self, x: int) -> None:
         """Map cursor x to coupling 0.0-1.0 from the slider bar."""
@@ -393,6 +480,12 @@ class WorldVisualizer:
 
     def _reset_world(self) -> None:
         """Reset world to initial state."""
+        if self.player is not None:
+            # Deterministic rebuild at tick 0, then keep playing state as-is
+            self.player.rebuild()
+            self.playing = False
+            self._sync_player()
+            return
         # Clear current state
         self.world.clear()
         # Restore initial configuration

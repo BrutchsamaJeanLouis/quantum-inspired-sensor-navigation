@@ -1,5 +1,14 @@
 # QIWM Scrapbook
 
+## 2026-09-24: PO session — LLM-driven tick controls + render fixes (all TODOs [x])
+
+- **`src/core/timeline.py`** (new): `TimelinePlayer` — deterministic scrubbable tick engine. `step(n)`; `seek(n)` = fast-forward if ahead, else re-seed + re-step n (rebuild world+swarm from factory, fixed seed ⇒ seek(n) ≡ live tick n); `rebuild()`, `stats()`, `guidance_field()`.
+- **`main.py` CLI**: `--scenario {default,maze}`, `--seed`, `--replay T1 T2…` (hop-and-screenshot), `--shot TICK --out FILE` (headless single frame = clean LLM bash primitive). Smoke: two `--shot 120` runs pixel-identical (max diff 0,0,0).
+- **Visualizer**: bottom tick slider (0..500) + tick label; Space pause/resume; ←/→ scrub (Shift ×10); Home seek 0; L/U coupling. `_sync_player()` re-points viz world/swarm after rewind. Render fixes: energy-source radius `strength^0.5*scale*0.5` (was covering the field); field normalization p1..p99 percentiles (min/max flattened heatmap).
+- **Tests**: `tests/test_timeline.py` (8) + `tests/test_tick_slider.py` (5: click-seek+arm-drag, drag-updates-tick, edges→0/max, slider click doesn't add energy, rewind re-points world) → **120 passed** (was 107). `examples/postkey.py`/`postmouse.py` (PostMessage key/mouse helpers — SendInput blocked in this env).
+- **Live GUI verification**: pause (zero pixel-diff 3 s), keyboard scrub (6628↔6633), ESC clean exit (exit 0, "Simulation Complete") all verified via PostMessage keys + PrintWindow captures. Window geometry decoded: GetClientRect=800×800 logical, DWM frame 1002×1040 physical (DPI-unaware/virtualized 1.25×) ⇒ PostMessage mouse coords in logical 800-space. PostMessage'd **keys reach pygame, mouse events don't register** on this SDL2/Windows/DPI-virtualized window (clicks at both y=774 and y=968 didn't seek; tick kept playing) — environmental, not code; the slider mouse→seek chain is the 5 unit-tested path.
+- **Env gotchas learned**: PrintWindow(PW_RENDERFULLCONTENT) renders the window regardless of virtual desktop but goes all-black after PostMessage mouse events; ImageGrab sees wallpaper when the window is on another Windows virtual desktop; demos launched via interactive_shell self-exit within minutes (20/20 alive, exit 0) — treat as short-lived, verify fast. Matplotlib deprecation warnings in visualizer.py:65-66 (`get_cmap`) — cosmetic, pre-existing.
+
 ## 2026-09-22: PO session — research paper + demo video + repo polish (all TODOs [x])
 
 - **`docs/PAPER.md`** (new): 8–12 pp research paper — Abstract + 7 sections
