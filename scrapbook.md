@@ -1,5 +1,15 @@
 # QIWM Scrapbook
 
+## 2026-09-25 PM: PO session — Applications section + repo publish + GitHub + Zenodo (all TODOs [x])
+
+- **Paper §5 Applications** added to `docs/PAPER.md` (8 ranked subsections 5.1–5.8, most→least impact: UUV/autonomy, planetary/rover, SAR/RF nav, indoor SLAM, swarm/underwater, embodied-LLM planning, biology-inspired research, education). Ranked by where a *locally-greedy* policy is most costly.
+- **Repo tidy + publish:** loose CSVs→`data/`, PNGs→`media/`, scratch→`scratch/`; `.gitignore` updated. Public GitHub `BrutchsamaJeanLouis/quantum-inspired-sensor-navigation` created; pushed (final `07de126`). Cross-links: paper→GitHub + DOI; README→DOI + author.
+- **Author fix:** paper/README/PDF now show **"Author: Brutchsama Jean-Louis"**; PDF `pdfauthor` metadata set to match (was "QIWM").
+- **PAPER.pdf:** pypandoc + xelatex + `docs/paper_header.tex` (newtxtext/T1 for ε≈≥≤≡). ~79KB, self-referential DOI.
+- **Zenodo flow (RDM API):** `POST /api/records/{id}/versions` → new recid; `PUT /draft` metadata (needs `publisher`, `person_or_org.given_name/family_name`); `POST /draft/actions/publish` → 202. Version 4 = **active DOI `10.5281/zenodo.22964117`** (v1 22961527 / v3 22963620 superseded but stay live; concept 22961526→latest). File drop = manual drag-and-drop (AGENTS.md rule), not setInputFiles.
+- **DOI resolution:** doi.org 404 right after publish is *expected* DataCite handle-registration lag (verified vs Zenodo/EPrints docs); concept DOI→latest version, version DOI→that version. Concept DOI handle was `responseCode:100` (registered, no URL yet) = in-progress, not failure.
+- **Env:** GCM OAuth token `gho_…` works for token-URL push; the `ghp_` PAT went stale. Zenodo CSRF via `csrftoken` cookie + `X-XSRF-TOKEN`/`X-CSRFToken` from a zenodo.org page. `related_identifiers[].relation_type` is a broken required-field in this RDM build → keep `[]`, put GitHub URL in description.
+
 ## 2026-09-25: PO session — exhaustive tick verification + quantum-history analysis (all TODOs [x])
 
 - **TODO 1a — headless matrix:** `examples/verify_tick_matrix.py` → **MATRIX PASS**. 28 in-process `--shot`-equivalent frames (default,maze)×(seed 42,7)×{t 0,1,5,50,120,300,500} all valid + divergent across t; cross-seed t0 identical; 8 CLI `--shot` determinism pairs pixel-identical. Re-confirmed today.
