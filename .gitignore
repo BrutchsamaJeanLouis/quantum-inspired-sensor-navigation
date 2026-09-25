@@ -63,3 +63,8 @@ docs/_templates/
 experiments/
 scratch/
 .aider*
+
+# Agent / tooling artifacts
+.pi/
+.playwright-mcp/
+lv_shot_*.png
