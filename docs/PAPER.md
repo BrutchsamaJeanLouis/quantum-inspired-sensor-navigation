@@ -1,8 +1,10 @@
 # Weakly Quantum-Inspired Navigation: A Pilot-Wave World Model That Finds Routes a Local Greedy Policy Cannot
 
-**A research prototype report** · QIWM (Quantum-Inspired World Model)
+**Author: Brutchsama Jean-Louis**
 
-> **Code, data & scripts:** <https://github.com/BrutchsamaJeanLouis/quantum-inspired-sensor-navigation> · **Paper DOI (Zenodo):** *see Data and code availability*.
+*A research prototype report* · QIWM (Quantum-Inspired World Model)
+
+> **Code, data & scripts:** <https://github.com/BrutchsamaJeanLouis/quantum-inspired-sensor-navigation> · **Paper DOI (Zenodo):** <https://doi.org/10.5281/zenodo.22963620> (`10.5281/zenodo.22963620`)
 
 > Scope statement. This is a 10-week research prototype, not a production system and
 > not a claim that these dynamics are quantum mechanics. We build a classical
@@ -594,7 +596,7 @@ our view, a more useful result than a clean win would have been.
 ## Data and code availability
 
 - **Repository:** <https://github.com/BrutchsamaJeanLouis/quantum-inspired-sensor-navigation> (world model, agents, Φ, ablation harness, all scripts, tests, and this report).
-- **Paper DOI (Zenodo):** __ZENODO_DOI__
+- **Paper DOI (Zenodo):** <https://doi.org/10.5281/zenodo.22963620> (`10.5281/zenodo.22963620`)
 - **Dataset** (all under `data/`): `ablation_results_v2.csv` (400 runs,
   byte-reproducible), `q_sweep_moving_n50.csv`, `epsilon_sweep_tunnel.csv`,
   `phi_rescope.csv`, `maze_route_audit.csv`, `path_efficiency_*.csv`,

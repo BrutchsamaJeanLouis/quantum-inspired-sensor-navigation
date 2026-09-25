@@ -1,6 +1,12 @@
-```yaml
 # QIWM: Quantum-Inspired World Model for Bio-AI Navigation
+
+> **[Cite / DOI (Zenodo): 10.5281/zenodo.22963620](https://doi.org/10.5281/zenodo.22963620)** · **[Research paper (PDF)](docs/PAPER.md)** · **Author: Brutchsama Jean-Louis**
+>
+> This repository is the canonical code, data, and scripts for the paper. The Zenodo record [`10.5281/zenodo.22963620`](https://doi.org/10.5281/zenodo.22963620) is linked here and back: the paper's *Data and code availability* section cites this GitHub repository, and the Zenodo record's related-identifier field points to it.
+
 # Lossless Context Compression for Development Agent
+
+```yaml
 
 ## Core Identity
 project_name: "Quantum-Inspired World Model (QIWM)"
