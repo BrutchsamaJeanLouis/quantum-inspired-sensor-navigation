@@ -28,6 +28,16 @@ Agents can feel the "pull" of food and rocks (the world computes a field of forc
 - **Quantum-inspired agent (the experiment):** real quantum particles don't behave like tiny balls — they spread out like a **wave** that explores many paths at once, and only "picks" a location when measured. We copy that idea (inspired by, not literally doing quantum mechanics): the agent keeps a **pilot wave** — a faint possibility-ripple around it — so it doesn't just follow the slope blindly; and it occasionally **collapses**, snapping its uncertainty down to "I am here now". The difference vs. the classical agent: a hiker who only looks at the steepest slope downhill, versus one who also vaguely senses which way they've already been, and occasionally stops to re-check the map.
 - **The Φ (phi) part:** a number meant to measure how much of the surroundings are self-organized versus chaotic noise. It's the most experimental feature — wired in and measured, but not yet showing a big difference (honestly noted in the docs).
 
+### Demo & visual evidence
+
+- **Full demo video** (A/B field + Φ overlay + summary card): [`media/demo_video.mp4`](media/demo_video.mp4)
+- **The headline result — tunnel level, quantum (20/20 survive) vs. classical (0/20).** The leaked sensing channel routes agents across the seam; the classical local-greedy policy cannot.
+  <img src="media/tunnel_demo_quantum.gif" width="380" alt="quantum: 20/20 survive"/>
+  <img src="media/tunnel_demo_classical.gif" width="380" alt="classical: 0/20 survive"/>
+- **Final frames (classical vs quantum):**
+  <img src="media/final_frame_classical.png" width="380"/>
+  <img src="media/final_frame_quantum.png" width="380"/>
+
 ### It's a research project, not a product
 
 Built like a science experiment:

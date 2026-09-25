@@ -2,6 +2,8 @@
 
 **A research prototype report** · QIWM (Quantum-Inspired World Model)
 
+> **Code, data & scripts:** <https://github.com/BrutchsamaJeanLouis/quantum-inspired-sensor-navigation> · **Paper DOI (Zenodo):** *see Data and code availability*.
+
 > Scope statement. This is a 10-week research prototype, not a production system and
 > not a claim that these dynamics are quantum mechanics. We build a classical
 > grid world, add a *quantum-inspired* sensing channel (a Bohmian-style pilot
@@ -209,7 +211,7 @@ agent wearing a classical costume. The v2 fixes:
 4. **Collapse ON by default** (the controller is part of the system, not an
    option).
 5. **A 2000-step prewarm + fixed RNG order** makes the 400-run dataset
-   **byte-identical on re-run** (verified: `ablation_results_v2.csv` reproduces
+   **byte-identical on re-run** (verified: `data/ablation_results_v2.csv` reproduces
    exactly).
 
 With the calibrated instrument, the true classical survival is **0–45%** (not
@@ -420,7 +422,98 @@ instrument and a consistent direction — not a silent null.
 
 ---
 
-## 5. Discussion
+## 5. Applications
+
+The practical value of the result is not the word "quantum" in the title — it is
+that the finding **replaces a fantasy with a mechanism**, and hands you the
+operating map. A "clean win" ("quantum is 1.5× better, ship it") would have been
+*less* useful: it would not tell you when the channel breaks (it does, in the
+dynamic/moving case at high coupling). "Route discovery, not wall penetration"
+is *buildable* — a specific architecture you bolt onto an existing local policy
+that measurably reaches more — and the ablation tells you exactly how to deploy
+it (weak coupling, on the gate). Ranked most → least impactful, here is what this
+everything enables, and the deliverable each one becomes.
+
+### 5.1 A drop-in exploration channel for local-greedy navigation agents
+
+*Most impactful — directly productizable.* Every agent that gets stuck in local
+minima today — warehouse AMRs, game NPCs, multi-agent swarms, network routing,
+protein/sequence search, any gradient-descent-style policy — can add this stack
+*on top of the existing greedy policy*, not instead of it: a cheap
+**globally-leaked sensing channel** (here, pilot-wave diffusion) + **Boltzmann
+sampling** + a **decision gate**, with the greedy policy as the fallback. The
+finding tells you the correct operating point — *weak coupling, always on the
+gate* — so it is shipped without the v1 "full-strength" bug.
+**Deliverable:** a library / agent mode ("greedy policy + leaky-sensor
+exploration") whose spec *is* the ablation CSV; a before/after on any local-greedy
+nav stack shows the reachability gain (maze: 0/20 → 20/20 arrivals).
+
+### 5.2 A reusable "is your baseline really a baseline?" eval method
+
+*The paper's most reusable piece.* The instrument forensics caught a
+control that shared the treatment's sensing channel (the v1 "classical" arm was
+the quantum sampler in argmax mode). The general rule — *an ablation is only as
+good as its baseline; a baseline that shares the treatment's channel is not a
+baseline* — applies to any A/B or feature-ablation claim in ML. **Deliverable:**
+a test/audit harness + checklist (deterministic baseline, deterministic
+tie-breaking, prewarm, fixed RNG order) that catches "the control is wearing the
+treatment's costume," with the v1→v2 forensics as the worked example.
+
+### 5.3 A sensor-vs-controller decomposition rule
+
+The cleanest causal statement in the project: **the leaky channel is the sensor;
+the collapse is the controller; they are not interchangeable** — sensing without
+the collapse-driven decision switch is *worse than classical* in dynamic/trapped
+worlds (moving: 0% vs 45%). This is a design rule for any sensing/planning split
+(robot perception+control, ranking+recsys, monitor+reactor): *when you add a
+new sensing channel, co-design its decision gate, or it backfires.*
+**Deliverable:** a one-page design pattern with the moving-scenario numbers as
+the proof.
+
+### 5.4 "Completeness, not directness" as a product axis
+
+The path-efficiency result (quantum ratio 0.495 < 1.15, i.e. *worse* on
+directness) reframes the "quantum is less efficient" objection as *"less
+direct, but actually arrives"* (maze: classical 0/20 at any efficiency, quantum
+20/20). For search/retrieval/recommender products, "recall over precision,
+exhaustive over fast" is a real, defensible positioning axis.
+**Deliverable:** copy + a metric ("reachability @ equal cost") for any product
+where missing the reachable target matters more than route length.
+
+### 5.5 A coupling auto-tuning rule
+
+The n=50 moving sweep is a monotone *"weak coupling wins, strong coupling is a
+liability"* curve (a moving target → the sensor lags). **Deliverable:** a
+controller that **down-regulates coupling in dynamic fields** — a concrete,
+measurable policy rather than a guess at a fixed hyperparameter.
+
+### 5.6 Honest-nulls as a "when NOT to use" boundary
+
+The ε-sweep (noise alone reaches 83.5%, never 100%) and the closed-boundary
+audit (remove the seam, *nobody* tunnels) give clear negative boundaries: no
+impenetrable-barrier penetration; plain stochastic noise is a cheap *partial*
+substitute. **Deliverable:** a one-page applicability boundary — *use when*
+occluded/contractible routes exist; *do not expect* wall-penetration or shorter
+paths. This stops a team from over-buying the "quantum" framing.
+
+### 5.7 A teaching / demo artifact
+
+The interactive demo (scrubbable timeline, `--shot` headless primitives, A/B
+field + Φ overlay) is a *visual proof of the mechanism* — you can watch the
+leaked field light up the far side of a wall ~2 steps before the agent goes.
+**Deliverable:** a talk/teaching demo for "non-local route discovery without a
+global map."
+
+### 5.8 A reproducible, CPU-only benchmark
+
+The whole thing is a tiny, **byte-reproducible** benchmark (128×128, 20 agents,
+one i3, ~71 s for 400 runs) for the question *"does global sensing beat local
+greedy here?"* **Deliverable:** a benchmark harness others can plug new
+scenarios or policies into.
+
+---
+
+## 6. Discussion
 
 Three claims survive the instrument forensics and the ablations:
 
@@ -458,7 +551,7 @@ baseline that shares the treatment's sensing channel is not a baseline.
 
 ---
 
-## 6. Limitations
+## 7. Limitations
 
 - **One world model, one grid, 20 agents, 500 steps.** Results are for *this*
   geometry family and scale. Generalization to larger/multi-scale worlds is
@@ -480,7 +573,7 @@ baseline that shares the treatment's sensing channel is not a baseline.
 
 ---
 
-## 7. Conclusion
+## 8. Conclusion
 
 A weakly quantum-inspired sensing channel — a pilot wave that leaks around
 obstacles, read through Boltzmann sampling, gated by a Penrose-style collapse —
@@ -500,14 +593,17 @@ our view, a more useful result than a clean win would have been.
 
 ## Data and code availability
 
-- Dataset: `ablation_results_v2.csv` (400 runs, byte-reproducible),
-  `q_sweep_moving_n50.csv`, `epsilon_sweep_tunnel.csv`, `phi_rescope.csv`,
-  `maze_route_audit.csv`, `path_efficiency_*.csv`, `energy_budget.csv`,
-  `moving_anticipation_n10.csv`, `phi_audit.csv`, `tunnel_closed_audit.csv`.
+- **Repository:** <https://github.com/BrutchsamaJeanLouis/quantum-inspired-sensor-navigation> (world model, agents, Φ, ablation harness, all scripts, tests, and this report).
+- **Paper DOI (Zenodo):** __ZENODO_DOI__
+- **Dataset** (all under `data/`): `ablation_results_v2.csv` (400 runs,
+  byte-reproducible), `q_sweep_moving_n50.csv`, `epsilon_sweep_tunnel.csv`,
+  `phi_rescope.csv`, `maze_route_audit.csv`, `path_efficiency_*.csv`,
+  `energy_budget.csv`, `moving_anticipation_n10.csv`, `phi_audit.csv`,
+  `tunnel_closed_audit.csv`.
 - Scripts: `examples/` (one script per table above); `src/core/` (world, agents,
   coherence, experiments).
 - Reproduce: `pip install -r requirements.txt && python examples/ablation_v2.py`,
   then `python examples/analyze_results.py`. Unit tests: `pytest tests -q`
-  (107 passed). CI: `.github/workflows/ci.yml`.
+  (120 passed). CI: `.github/workflows/ci.yml`.
 - All headline numbers trace to a committed CSV and a named script; the
   re-scoped Φ audit is `python examples/phi_rescope.py`.

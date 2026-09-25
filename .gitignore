@@ -68,3 +68,7 @@ scratch/
 .pi/
 .playwright-mcp/
 lv_shot_*.png
+
+# Tidy: demo media + agent local settings
+media/
+.claude/
